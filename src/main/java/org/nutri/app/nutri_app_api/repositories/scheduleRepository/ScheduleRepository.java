@@ -37,6 +37,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
                 "    schedule.duration_minutes AS durationMinutes, " +
                 "    app.id AS appointmentId, " +
                 "    CONCAT(u.first_name, ' ', u.last_name) AS patientName, " +
+                "    u.id AS patientId, " +
+                "    u.email AS patientEmail, " +
                 "    s.name AS status, " +
                 "    CASE WHEN app.id IS NOT NULL THEN 'APPOINTMENT' ELSE 'SCHEDULE' END AS type " +
                 "FROM " +

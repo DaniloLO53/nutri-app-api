@@ -15,7 +15,7 @@ public class PatientSearchByNameDTO {
     private UUID id;
 
     @NotNull
-    private String fullName;
+    private String name;
 
     @NotNull
     private String email;

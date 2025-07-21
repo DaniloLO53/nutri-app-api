@@ -64,16 +64,16 @@ public class ScheduleController {
 
     @PostMapping("/nutritionists/me/schedules")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<?> createSchedule(
+    public ResponseEntity<OwnScheduleDTO> createSchedule(
             Authentication authentication,
             @RequestBody @Valid ScheduleCreateDTO scheduleDTO) {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        scheduleService.createSchedule(userId, scheduleDTO);
+        OwnScheduleDTO savedScheduleDTO = scheduleService.createSchedule(userId, scheduleDTO);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedScheduleDTO);
     }
 
     @DeleteMapping("/nutritionists/me/schedules/{scheduleId}")

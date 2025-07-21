@@ -16,5 +16,9 @@ public interface OwnScheduleProjection {
 
     String getPatientName();
 
+    UUID getPatientId();
+
+    String getPatientEmail();
+
     String getStatus();
 }

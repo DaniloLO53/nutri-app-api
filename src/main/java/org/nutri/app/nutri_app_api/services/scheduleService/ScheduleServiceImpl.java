@@ -4,6 +4,7 @@ import org.nutri.app.nutri_app_api.exceptions.ConflictException;
 import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
 import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatusName;
 import org.nutri.app.nutri_app_api.models.schedules.Schedule;
+import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.*;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentRepository;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.OwnScheduleProjection;
@@ -92,7 +93,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public void createSchedule(UUID userId, ScheduleCreateDTO scheduleDTO) {
+    public OwnScheduleDTO createSchedule(UUID userId, ScheduleCreateDTO scheduleDTO) {
         Nutritionist nutritionist = nutritionistRepository.findFirstByUser_Id(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Farmacêutico", "id", userId.toString()));
 
@@ -128,7 +129,27 @@ public class ScheduleServiceImpl implements ScheduleService {
 
 
         // It doesn't save a new nutritionist - if nutritionist has id, it updates. Otherwise, it creates a new one
-        nutritionistRepository.save(nutritionist);
+        Nutritionist savedNutritionist = nutritionistRepository.save(nutritionist);
+        Schedule savedSchedule = savedNutritionist
+                .getSchedules()
+                .stream()
+                .filter(s -> s.getStartTime().isEqual(scheduleStart))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Erro ao criar horário"));
+
+        return createScheduleCreateDTO(savedSchedule);
+    }
+
+    private OwnScheduleDTO createScheduleCreateDTO(Schedule savedSchedule) {
+        OwnScheduleDTO dto = new OwnScheduleDTO();
+
+        dto.setId(savedSchedule.getId());
+        dto.setStartTime(savedSchedule.getStartTime());
+        dto.setDurationMinutes(savedSchedule.getDurationMinutes());
+        dto.setType(AppointmentOrSchedule.SCHEDULE);
+        dto.setStatus(AppointmentStatusName.AGENDADO);
+
+        return dto;
     }
 
     private OwnScheduleDTO convertProjectionToDto(OwnScheduleProjection projection) {
@@ -154,8 +175,13 @@ public class ScheduleServiceImpl implements ScheduleService {
             ? AppointmentStatusName.valueOf(projection.getStatus())
             : AppointmentStatusName.DISPONIVEL; // Supondo que você tenha um status 'DISPONIVEL' no enum
 
+        PatientSearchByNameDTO patientDTO = new PatientSearchByNameDTO();
+        patientDTO.setName(patientName);
+        patientDTO.setEmail(projection.getPatientEmail());
+        patientDTO.setId(projection.getPatientId());
+
         // 5. Criação do DTO
-        return new OwnScheduleDTO(id, startTime, durationMinutes, type, patientName, status);
+        return new OwnScheduleDTO(id, startTime, durationMinutes, type, patientDTO, status);
     }
 
     private boolean verifyNutritionistHasOverlapSchedule(Nutritionist nutritionist,

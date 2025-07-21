@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface ScheduleService {
-    void createSchedule(UUID userId, ScheduleCreateDTO nutritionistScheduleDTO);
+    OwnScheduleDTO createSchedule(UUID userId, ScheduleCreateDTO nutritionistScheduleDTO);
     Set<ScheduleCreateDTO> getSchedulesFromNutritionist(UUID nutritionistId, ScheduleParameters params);
     Set<OwnScheduleDTO> getOwnSchedules(UUID userId, ScheduleParameters params);
     void deleteSchedule(UUID userId, UUID scheduleId);

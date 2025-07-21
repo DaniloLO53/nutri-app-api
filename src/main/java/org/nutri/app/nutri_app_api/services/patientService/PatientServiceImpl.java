@@ -27,7 +27,7 @@ public class PatientServiceImpl implements PatientService {
             PatientSearchByNameDTO patientDTO = new PatientSearchByNameDTO();
 
             patientDTO.setId(projection.getId());
-            patientDTO.setFullName(projection.getFullName());
+            patientDTO.setName(projection.getFullName());
             patientDTO.setEmail(projection.getEmail());
 
             return patientDTO;

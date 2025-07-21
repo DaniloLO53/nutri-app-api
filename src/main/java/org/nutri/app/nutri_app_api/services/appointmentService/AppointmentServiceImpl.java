@@ -8,10 +8,10 @@ import org.nutri.app.nutri_app_api.models.appointments.Appointment;
 import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatus;
 import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatusName;
 import org.nutri.app.nutri_app_api.models.schedules.Schedule;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.AppointmentDTO;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.AppointmentPatientDTO;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.CreateAppointmentDTO;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.EventType;
+import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.*;
+import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.AppointmentOrSchedule;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
 import org.nutri.app.nutri_app_api.repositories.AppointmentStatusRepository;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentNutritionistProjection;
@@ -60,7 +60,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public void deleteAppointment(UUID userId, UUID appointmentId) {
+    public ResponseToCreateAppointment deleteAppointment(UUID userId, UUID appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", appointmentId.toString()));
 
@@ -81,11 +81,28 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         appointmentRepository.delete(appointment);
+
+        ResponseToCreateAppointment responseToCreateAppointment = new ResponseToCreateAppointment();
+
+        responseToCreateAppointment.setId(appointment.getId());
+        responseToCreateAppointment.setType(AppointmentOrSchedule.APPOINTMENT);
+        responseToCreateAppointment.setStatus(AppointmentStatusName.valueOf(appointment.getAppointmentStatus().getName()));
+        responseToCreateAppointment.setDurationMinutes(appointment.getSchedule().getDurationMinutes());
+        responseToCreateAppointment.setStartTime(appointment.getSchedule().getStartTime());
+
+        PatientSearchByNameDTO patientSearchByNameDTO = new PatientSearchByNameDTO();
+        patientSearchByNameDTO.setId(appointment.getId());
+        patientSearchByNameDTO.setName(appointment.getPatient().getUser().getFirstName() + " " + appointment.getPatient().getUser().getLastName());
+        patientSearchByNameDTO.setEmail(appointment.getPatient().getUser().getEmail());
+
+        responseToCreateAppointment.setPatient(patientSearchByNameDTO);
+
+        return responseToCreateAppointment;
     }
 
     @Override
     @Transactional
-    public CreateAppointmentDTO createAppointment(UserDetailsImpl userDetails, CreateAppointmentDTO createAppointmentDTO) {
+    public ResponseToCreateAppointment createAppointment(UserDetailsImpl userDetails, CreateAppointmentDTO createAppointmentDTO) {
         UUID userId = userDetails.getId();
         String userRole = userDetails.getAuthorities().iterator().next().getAuthority();
 
@@ -116,7 +133,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         boolean patientHasAppointment = appointmentRepository.patientAlreadyHasSchedule(patient.getId(),AppointmentStatusName.AGENDADO.name(), AppointmentStatusName.CONFIRMADO.name(), schedule.getStartTime());
         if (patientHasAppointment) {
-            throw new ConflictException("Essa paciente já possui consulta agendada");
+            throw new ConflictException("Esse paciente já possui consulta agendada");
         }
 
         // Verifica se a vaga escolhida já está associada a outra consulta.
@@ -146,7 +163,22 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointmentPatient.setId(patientId);
         appointmentDTO.setPatient(appointmentPatient);
 
-        return modelMapper.map(savedAppointment, CreateAppointmentDTO.class);
+        ResponseToCreateAppointment responseToCreateAppointment = new ResponseToCreateAppointment();
+
+        responseToCreateAppointment.setId(savedAppointment.getId());
+        responseToCreateAppointment.setType(AppointmentOrSchedule.APPOINTMENT);
+        responseToCreateAppointment.setStatus(AppointmentStatusName.valueOf(savedAppointment.getAppointmentStatus().getName()));
+        responseToCreateAppointment.setDurationMinutes(savedAppointment.getSchedule().getDurationMinutes());
+        responseToCreateAppointment.setStartTime(savedAppointment.getSchedule().getStartTime());
+
+        PatientSearchByNameDTO patientSearchByNameDTO = new PatientSearchByNameDTO();
+        patientSearchByNameDTO.setId(savedAppointment.getId());
+        patientSearchByNameDTO.setName(savedAppointment.getPatient().getUser().getFirstName() + " " + savedAppointment.getPatient().getUser().getLastName());
+        patientSearchByNameDTO.setEmail(savedAppointment.getPatient().getUser().getEmail());
+
+        responseToCreateAppointment.setPatient(patientSearchByNameDTO);
+
+        return responseToCreateAppointment;
     }
 
     @Override

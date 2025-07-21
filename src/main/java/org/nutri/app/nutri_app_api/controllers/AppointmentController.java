@@ -3,6 +3,7 @@ package org.nutri.app.nutri_app_api.controllers;
 import jakarta.validation.Valid;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.AppointmentDTO;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.CreateAppointmentDTO;
+import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.ResponseToCreateAppointment;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.appointmentService.AppointmentService;
@@ -26,7 +27,7 @@ public class AppointmentController {
 
     @PostMapping("/appointments/schedules/{scheduleId}")
     @PreAuthorize("hasAnyRole('ROLE_PATIENT', 'ROLE_NUTRITIONIST')")
-    public ResponseEntity<CreateAppointmentDTO> createAppointment(
+    public ResponseEntity<ResponseToCreateAppointment> createAppointment(
             Authentication authentication,
             @Valid @RequestBody CreateAppointmentDTO createAppointmentDTO,
             @PathVariable UUID scheduleId) {
@@ -34,12 +35,12 @@ public class AppointmentController {
 
         createAppointmentDTO.setScheduleId(scheduleId);
 
-        CreateAppointmentDTO appointment = appointmentService.createAppointment(userDetails, createAppointmentDTO);
+        ResponseToCreateAppointment appointment = appointmentService.createAppointment(userDetails, createAppointmentDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(appointment);
     }
 
-    @GetMapping("/patients/me/appointments/future")
+    @GetMapping("/patients/me/appointments")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
     public ResponseEntity<Set<AppointmentPatientProjection>> getPatientFutureAppointments(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -50,7 +51,7 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
     }
 
-    @GetMapping("/nutritionists/me/appointments/future")
+    @GetMapping("/nutritionists/me/appointments")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
     public ResponseEntity<Set<AppointmentDTO>> getNutritionistFutureAppointments(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -63,12 +64,12 @@ public class AppointmentController {
 
     @DeleteMapping("nutritionists/me/appointments/{appointmentId}")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<?> deleteAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
+    public ResponseEntity<ResponseToCreateAppointment> deleteAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        appointmentService.deleteAppointment(userId, appointmentId);
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.deleteAppointment(userId, appointmentId);
 
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }
 }
