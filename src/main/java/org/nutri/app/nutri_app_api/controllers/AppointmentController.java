@@ -1,8 +1,9 @@
 package org.nutri.app.nutri_app_api.controllers;
 
 import jakarta.validation.Valid;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.AppointmentDTO;
+import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.NutritionistFutureAppointmentDTO;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.CreateAppointmentDTO;
+import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.PatientFutureAppointmentDTO;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.ResponseToCreateAppointment;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
@@ -42,22 +43,22 @@ public class AppointmentController {
 
     @GetMapping("/patients/me/appointments")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
-    public ResponseEntity<Set<AppointmentPatientProjection>> getPatientFutureAppointments(Authentication authentication) {
+    public ResponseEntity<Set<PatientFutureAppointmentDTO>> getPatientFutureAppointments(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        Set<AppointmentPatientProjection> appointments = appointmentService.getPatientFutureAppointments(userId);
+        Set<PatientFutureAppointmentDTO> appointments = appointmentService.getPatientFutureAppointments(userId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
     }
 
     @GetMapping("/nutritionists/me/appointments")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<Set<AppointmentDTO>> getNutritionistFutureAppointments(Authentication authentication) {
+    public ResponseEntity<Set<NutritionistFutureAppointmentDTO>> getNutritionistFutureAppointments(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        Set<AppointmentDTO> appointments = appointmentService.getNutritionistFutureAppointments(userId);
+        Set<NutritionistFutureAppointmentDTO> appointments = appointmentService.getNutritionistFutureAppointments(userId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
     }

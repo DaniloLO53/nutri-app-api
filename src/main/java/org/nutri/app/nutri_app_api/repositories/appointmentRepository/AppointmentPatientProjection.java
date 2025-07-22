@@ -7,6 +7,9 @@ public interface AppointmentPatientProjection {
     UUID getId();
     LocalDateTime getStartTime();
     Integer getDurationMinutes();
-    String getPatientName();
+    String getNutritionistName();
+    String getNutritionistEmail();
+    UUID getNutritionistId();
     String getStatus();
+    Boolean isRemote();
 }
