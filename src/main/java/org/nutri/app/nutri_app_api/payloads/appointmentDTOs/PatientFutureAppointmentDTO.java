@@ -10,14 +10,15 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @AllArgsConstructor
-@EqualsAndHashCode
-@ToString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
-public class AppointmentDTO {
-    private @NotNull String id;
-    private @NotNull AppointmentPatientDTO patient;
+public class PatientFutureAppointmentDTO {
+    private @NotNull @EqualsAndHashCode.Include String id;
+    private @NotNull PatientFutureAppointmentNutritionistDTO nutritionist;
     private @NotNull LocalDateTime startTime;
     private @NotNull @AllowedDurations Integer durationMinutes;
     private @NotNull EventType type;
     private @NotNull AppointmentStatusName status;
+    private @NotNull Boolean isRemote;
 }

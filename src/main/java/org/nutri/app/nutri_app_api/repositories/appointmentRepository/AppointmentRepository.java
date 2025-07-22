@@ -51,8 +51,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     @Query(
             nativeQuery = true,
-            value = "SELECT a.id, CONCAT(u_nutritionist.first_name, ' ', u_nutritionist.last_name) AS nutritionistName, pa.start_time AS startTime, " +
-                    "pa.duration_minutes AS durationMinutes, aps.name AS status " +
+            value = "SELECT a.id, CONCAT(u_nutritionist.first_name, ' ', u_nutritionist.last_name) AS nutritionistName, " +
+                    "u_nutritionist.email AS nutritionistEmail, u_nutritionist.id AS nutritionistId, pa.start_time AS startTime, " +
+                    "pa.duration_minutes AS durationMinutes, aps.name AS status, a.is_remote AS isRemote " +
                     "FROM appointments a " +
                     "LEFT JOIN appointments_status aps ON aps.id = a.appointments_status_id " +
                     "LEFT JOIN patients pt ON pt.id = a.patient_id " +
@@ -69,7 +70,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     @Query(
             nativeQuery = true,
             value = "SELECT a.id, CONCAT(u_patient.first_name, ' ', u_patient.last_name) AS patientName, u_patient.email AS patientEmail, " +
-                    "u_patient.id AS patientId, s.start_time AS startTime, " +
+                    "u_patient.id AS patientId, s.start_time AS startTime, a.is_remote AS isRemote, " +
                     "s.duration_minutes AS durationMinutes, aps.name AS status " +
                     "FROM appointments a " +
                     "LEFT JOIN appointments_status aps ON aps.id = a.appointments_status_id " +
