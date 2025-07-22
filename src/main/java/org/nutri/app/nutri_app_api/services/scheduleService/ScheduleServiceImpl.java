@@ -7,11 +7,14 @@ import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.*;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentRepository;
+import org.nutri.app.nutri_app_api.repositories.patientRepository.PatientRepository;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.OwnScheduleProjection;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileRepository;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleProjection;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
+import org.nutri.app.nutri_app_api.security.models.users.Patient;
+import org.nutri.app.nutri_app_api.security.repositories.AuthRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -24,11 +27,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ProfileRepository nutritionistRepository;
     private final AppointmentRepository appointmentRepository;
+    private final PatientRepository patientRepository;
 
-    public ScheduleServiceImpl(ScheduleRepository scheduleRepository, ProfileRepository nutritionistRepository, AppointmentRepository appointmentRepository) {
+    public ScheduleServiceImpl(ScheduleRepository scheduleRepository, ProfileRepository nutritionistRepository, AppointmentRepository appointmentRepository, PatientRepository patientRepository) {
         this.scheduleRepository = scheduleRepository;
         this.nutritionistRepository = nutritionistRepository;
         this.appointmentRepository = appointmentRepository;
+        this.patientRepository = patientRepository;
     }
 
     @Override
@@ -62,34 +67,33 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Set<ScheduleCreateDTO> getSchedulesFromNutritionist(UUID nutritionistId, ScheduleParameters params) {
+    public Set<OwnScheduleDTO> getSchedulesFromNutritionist(UUID userId, UUID nutritionistId, ScheduleParameters params) {
         LocalDateTime startTime = params.getStartDate().atStartOfDay();
         LocalDateTime endTime = params.getEndDate().plusDays(1).atStartOfDay();
 
-        nutritionistRepository
-                .findById(nutritionistId)
-                .orElseThrow(() -> new ResourceNotFoundException("Farmacêutico", "id", nutritionistId.toString()));
+        Patient patient = patientRepository
+                .findFirstByUser_Id(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id de usuário", userId.toString()));
 
-        Set<ScheduleProjection> schedulesByStartAndEndDate = scheduleRepository
-                .findSchedulesByStartAndEndDate(nutritionistId, startTime, endTime);
+        Nutritionist nutritionist = nutritionistRepository
+                .findFirstById(nutritionistId)
+                .orElseThrow(() -> new ResourceNotFoundException("Nutricionista", "id", nutritionistId.toString()));
 
-        return schedulesByStartAndEndDate.stream().map(
-                avail -> {
-                    LocalDateTime scheduleStartTime = avail.getStartTime();
-                    Integer year = scheduleStartTime.getYear();
-                    Integer month = scheduleStartTime.getMonthValue();
-                    Integer day = scheduleStartTime.getDayOfMonth();
-                    Integer hour = scheduleStartTime.getHour();
-                    Integer minute = scheduleStartTime.getMinute();
+        Set<OwnScheduleProjection> schedulesByStartAndEndDate = scheduleRepository
+                .findOwnSchedulesByStartAndEndDate(nutritionist.getId(), startTime, endTime);
 
-                    CustomLocalDateTime customLocalDateTime = new CustomLocalDateTime(year, month, day, hour, minute);
-                    Integer durationMinutes = avail.getDurationMinutes();
+        Set<OwnScheduleDTO> scheduleDTO = schedulesByStartAndEndDate
+                .stream()
+                .map(this::convertProjectionToDto).collect(Collectors.toSet());
 
-                    UUID id = avail.getId();
+        return scheduleDTO.stream().peek(dto -> {
+            boolean isAppointment = dto.getType().equals(AppointmentOrSchedule.APPOINTMENT);
+            boolean isOwnAppointment = patient.getId().equals(dto.getPatient().getId());
 
-                    return new ScheduleCreateDTO(id, customLocalDateTime, durationMinutes);
-                }
-        ).collect(Collectors.toSet());
+            if (isAppointment && !isOwnAppointment) {
+                dto.setPatient(null);
+            }
+        }).collect(Collectors.toSet());
     }
 
     @Override

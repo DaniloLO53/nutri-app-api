@@ -23,7 +23,7 @@ public interface AuthRepository extends JpaRepository<User, UUID> {
 
     @Query(
             nativeQuery = true,
-            value = "SELECT u.first_name AS firstName, u.last_name AS lastName, u.email, u.role, p.cpf, p.birthday, n.crf " +
+            value = "SELECT u.id, u.first_name AS firstName, u.last_name AS lastName, u.email, u.role, p.cpf, p.birthday, n.crf " +
                     "FROM users u " +
                     "LEFT JOIN patients p ON p.user_id = u.id " +
                     "LEFT JOIN nutritionists n ON n.user_id = u.id " +

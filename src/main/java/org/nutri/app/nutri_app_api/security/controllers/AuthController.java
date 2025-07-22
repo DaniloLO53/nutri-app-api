@@ -49,6 +49,7 @@ public class AuthController {
         responseSignIn.setRole(response.getRole());
         responseSignIn.setFirstName(response.getFirstName());
         responseSignIn.setLastName(response.getLastName());
+        responseSignIn.setId(response.getId());
 
         return ResponseEntity
                 .status(HttpStatus.OK)

@@ -105,15 +105,21 @@ public class AppointmentServiceImpl implements AppointmentService {
         UUID userId = userDetails.getId();
         String userRole = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        UUID patientId = createAppointmentDTO.getPatientId();
+        UUID patientIdOrUserId =  createAppointmentDTO.getPatientId();
         UUID nutritionistScheduleId = createAppointmentDTO.getScheduleId();
         Boolean isRemote = createAppointmentDTO.getIsRemote();
 
         Schedule schedule = nutritionistScheduleRepository.findFirstById(nutritionistScheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Disponibilidade", "id", nutritionistScheduleId.toString()));
 
-        Patient patient = patientRepository.findById(patientId)
-                .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", patientId.toString()));
+        Patient patient;
+        if (userRole.equals(RoleName.ROLE_NUTRITIONIST.name())) {
+            patient = patientRepository.findById(patientIdOrUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", patientIdOrUserId.toString()));
+        } else {
+            patient = patientRepository.findFirstByUser_Id(patientIdOrUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "id", patientIdOrUserId.toString()));
+        }
 
         Nutritionist nutritionist = nutritionistRepository
                 .findById(schedule.getNutritionist().getId())
@@ -159,7 +165,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         NutritionistFutureAppointmentPatientDTO appointmentPatient = new NutritionistFutureAppointmentPatientDTO();
         appointmentPatient.setName(patient.getUser().getFirstName() + " " + patient.getUser().getLastName());
         appointmentPatient.setEmail(patient.getUser().getEmail());
-        appointmentPatient.setId(patientId);
+        appointmentPatient.setId(patientIdOrUserId);
         nutritionistFutureAppointmentDTO.setPatient(appointmentPatient);
 
         ResponseToCreateAppointment responseToCreateAppointment = new ResponseToCreateAppointment();

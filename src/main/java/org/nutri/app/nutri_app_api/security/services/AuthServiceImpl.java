@@ -21,6 +21,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
@@ -106,10 +108,12 @@ public class AuthServiceImpl implements AuthService {
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
         String firstName = userDetails.getFirstName();
         String lastName = userDetails.getLastName();
+        UUID userId = userDetails.getId();
 
         ResponseSignIn responseSignIn = new ResponseSignIn();
 
         responseSignIn.setJwtCookie(jwtCookie);
+        responseSignIn.setId(userId.toString());
         responseSignIn.setEmail(email);
         responseSignIn.setFirstName(firstName);
         responseSignIn.setLastName(lastName);
