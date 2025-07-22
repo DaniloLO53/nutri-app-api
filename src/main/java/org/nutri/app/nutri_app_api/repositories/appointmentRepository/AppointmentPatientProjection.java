@@ -11,5 +11,5 @@ public interface AppointmentPatientProjection {
     String getNutritionistEmail();
     UUID getNutritionistId();
     String getStatus();
-    Boolean isRemote();
+    Boolean getIsRemote();
 }

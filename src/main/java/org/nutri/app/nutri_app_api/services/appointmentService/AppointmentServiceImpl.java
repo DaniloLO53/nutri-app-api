@@ -188,7 +188,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             PatientFutureAppointmentDTO patientFutureAppointmentDTO = new PatientFutureAppointmentDTO();
 
             patientFutureAppointmentDTO.setId(projection.getId().toString());
-            patientFutureAppointmentDTO.setIsRemote(projection.isRemote());
+            patientFutureAppointmentDTO.setIsRemote(projection.getIsRemote());
             patientFutureAppointmentDTO.setStartTime(projection.getStartTime());
             patientFutureAppointmentDTO.setDurationMinutes(projection.getDurationMinutes());
             patientFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
@@ -213,7 +213,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             NutritionistFutureAppointmentDTO nutritionistFutureAppointmentDTO = new NutritionistFutureAppointmentDTO();
 
             nutritionistFutureAppointmentDTO.setId(projection.getId().toString());
-            nutritionistFutureAppointmentDTO.setIsRemote(projection.isRemote());
+            nutritionistFutureAppointmentDTO.setIsRemote(projection.getIsRemote());
             nutritionistFutureAppointmentDTO.setStartTime(projection.getStartTime());
             nutritionistFutureAppointmentDTO.setDurationMinutes(projection.getDurationMinutes());
             nutritionistFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
