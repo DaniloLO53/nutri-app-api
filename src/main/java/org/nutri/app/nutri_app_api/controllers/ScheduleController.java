@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -28,7 +29,8 @@ public class ScheduleController {
 
     @GetMapping("/nutritionists/{nutritionist_id}/schedules")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
-    public ResponseEntity<Set<ScheduleCreateDTO>> getSchedulesFromNutritionist(
+    public ResponseEntity<Set<OwnScheduleDTO>> getSchedulesFromNutritionist(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable UUID nutritionist_id,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
@@ -37,7 +39,9 @@ public class ScheduleController {
                 .withStartDate(startDate)
                 .withEndDate(endDate)
                 .build();
-        Set<ScheduleCreateDTO> schedules = scheduleService.getSchedulesFromNutritionist(nutritionist_id, params);
+
+        UUID userId = userDetails.getId();
+        Set<OwnScheduleDTO> schedules = scheduleService.getSchedulesFromNutritionist(userId, nutritionist_id, params);
 
         return ResponseEntity.status(HttpStatus.OK).body(schedules);
     }

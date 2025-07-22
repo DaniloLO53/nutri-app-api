@@ -15,6 +15,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class ResponseSignIn {
+    private String id;
     private String email;
     private String firstName;
     private String lastName;
@@ -22,5 +23,5 @@ public class ResponseSignIn {
     private String cpf;
     private LocalDate birthday;
     private String crf;
-    ResponseCookie jwtCookie;
+    private ResponseCookie jwtCookie;
 }

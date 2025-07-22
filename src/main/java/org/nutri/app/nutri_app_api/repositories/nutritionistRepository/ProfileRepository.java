@@ -25,4 +25,6 @@ public interface ProfileRepository extends JpaRepository<Nutritionist, UUID>, Pr
                     "WHERE u.id = :userId;"
     )
     Set<NutritionistProfileFlatProjection> findNutritionistProfile(@Param("userId") UUID userId);
+
+    Optional<Nutritionist> findFirstById(UUID id);
 }

@@ -12,8 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateAppointmentDTO {
-    @NotNull
-    private UUID patientId;
+    private @NotNull UUID patientId;
     private UUID scheduleId;
-    private Boolean isRemote;
+    private @NotNull Boolean isRemote;
 }
