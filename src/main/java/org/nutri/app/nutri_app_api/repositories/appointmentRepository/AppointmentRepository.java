@@ -71,11 +71,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             nativeQuery = true,
             value = "SELECT a.id, CONCAT(u_patient.first_name, ' ', u_patient.last_name) AS patientName, u_patient.email AS patientEmail, " +
                     "u_patient.id AS patientId, s.start_time AS startTime, a.is_remote AS isRemote, " +
-                    "s.duration_minutes AS durationMinutes, aps.name AS status " +
+                    "s.duration_minutes AS durationMinutes, aps.name AS status, l.address " +
                     "FROM appointments a " +
                     "LEFT JOIN appointments_status aps ON aps.id = a.appointments_status_id " +
                     "LEFT JOIN patients pt ON pt.id = a.patient_id " +
                     "LEFT JOIN schedules s ON s.id = a.schedule_id " +
+                    "LEFT JOIN locations l ON l.id = s.location_id " +
                     "LEFT JOIN nutritionists n ON n.id = s.nutritionist_id " +
                     "LEFT JOIN users u_patient ON u_patient.id = pt.user_id " +
                     "WHERE n.user_id = :userId " +

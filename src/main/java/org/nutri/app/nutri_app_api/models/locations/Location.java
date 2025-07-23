@@ -7,8 +7,10 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -86,4 +88,7 @@ public class Location {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "nutritionist_id", referencedColumnName = "id", nullable = false)
     private Nutritionist nutritionist;
+
+    @OneToMany(mappedBy = "location", cascade = { CascadeType.ALL }, orphanRemoval = true)
+    private Set<Schedule> schedules;
 }
