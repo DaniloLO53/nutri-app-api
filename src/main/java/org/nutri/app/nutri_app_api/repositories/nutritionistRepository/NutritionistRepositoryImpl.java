@@ -7,7 +7,7 @@ import jakarta.persistence.Query;
 import java.util.*;
 
 // O nome DEVE ser o nome da interface do repositório + "Impl"
-public class ProfileRepositoryImpl implements ProfileRepositoryCustom {
+public class NutritionistRepositoryImpl implements NutritionistRepositoryCustom {
 
     @PersistenceContext
     private EntityManager entityManager;

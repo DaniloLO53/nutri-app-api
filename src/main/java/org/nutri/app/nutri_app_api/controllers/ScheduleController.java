@@ -66,16 +66,17 @@ public class ScheduleController {
         return ResponseEntity.status(HttpStatus.OK).body(schedules);
     }
 
-    @PostMapping("/nutritionists/me/schedules")
+    @PostMapping("/nutritionists/me/schedules/{locationId}")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
     public ResponseEntity<OwnScheduleDTO> createSchedule(
             Authentication authentication,
+            @PathVariable UUID locationId,
             @RequestBody @Valid ScheduleCreateDTO scheduleDTO) {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        OwnScheduleDTO savedScheduleDTO = scheduleService.createSchedule(userId, scheduleDTO);
+        OwnScheduleDTO savedScheduleDTO = scheduleService.createSchedule(userId, locationId, scheduleDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedScheduleDTO);
     }

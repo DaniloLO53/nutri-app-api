@@ -8,7 +8,7 @@ import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.NutritionistProfile
 import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParamsDTO;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistProfileFlatProjection;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileByParamsProjection;
-import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileRepository;
+import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 
 @Service
 public class NutritionistServiceImpl implements NutritionistService {
-    private final ProfileRepository nutritionistRepository;
+    private final NutritionistRepository nutritionistRepository;
     private final ModelMapper modelMapper;
 
     public NutritionistServiceImpl(
-            ProfileRepository nutritionistRepository,
+            NutritionistRepository nutritionistRepository,
             ModelMapper modelMapper) {
         this.nutritionistRepository = nutritionistRepository;
         this.modelMapper = modelMapper;

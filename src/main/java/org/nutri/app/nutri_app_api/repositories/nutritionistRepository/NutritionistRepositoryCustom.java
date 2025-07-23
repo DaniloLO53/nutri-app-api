@@ -1,9 +1,8 @@
 package org.nutri.app.nutri_app_api.repositories.nutritionistRepository;
 
-import java.util.List;
 import java.util.Set;
 
-public interface ProfileRepositoryCustom {
+public interface NutritionistRepositoryCustom {
     Set<ProfileByParamsProjection> findNutritionistProfilesByParams(
             String nutritionistName,
             String ibgeApiCity,

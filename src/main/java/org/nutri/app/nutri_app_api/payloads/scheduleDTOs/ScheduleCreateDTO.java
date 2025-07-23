@@ -14,12 +14,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ScheduleCreateDTO {
     private UUID id;
-
-    @NotNull
-    @ToString.Include
-    private CustomLocalDateTime startLocalDateTime;
-
-    @NotNull
-    @AllowedDurations
-    private Integer durationMinutes;
+    @NotNull @ToString.Include private CustomLocalDateTime startLocalDateTime;
+    @NotNull @AllowedDurations private Integer durationMinutes;
 }

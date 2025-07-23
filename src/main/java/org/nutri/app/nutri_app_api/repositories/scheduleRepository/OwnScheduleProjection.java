@@ -5,20 +5,14 @@ import java.util.UUID;
 
 public interface OwnScheduleProjection {
     UUID getScheduleId();
-    
     UUID getAppointmentId();
-
+    String getAddress();
+    UUID getLocationId();
     LocalDateTime getStartTime();
-
     Integer getDurationMinutes();
-    
     String getType();
-
     String getPatientName();
-
     UUID getPatientId();
-
     String getPatientEmail();
-
     String getStatus();
 }

@@ -1,21 +1,27 @@
 package org.nutri.app.nutri_app_api.services.scheduleService;
 
 import org.nutri.app.nutri_app_api.exceptions.ConflictException;
+import org.nutri.app.nutri_app_api.exceptions.ForbiddenException;
 import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
+import org.nutri.app.nutri_app_api.models.appointments.Appointment;
+import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatus;
 import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatusName;
+import org.nutri.app.nutri_app_api.models.locations.Location;
 import org.nutri.app.nutri_app_api.models.schedules.Schedule;
+import org.nutri.app.nutri_app_api.payloads.locationDTOs.OwnLocationResponse;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.*;
+import org.nutri.app.nutri_app_api.repositories.AppointmentStatusRepository;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentRepository;
+import org.nutri.app.nutri_app_api.repositories.locationRepository.LocationRepository;
+import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistRepository;
 import org.nutri.app.nutri_app_api.repositories.patientRepository.PatientRepository;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.OwnScheduleProjection;
-import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileRepository;
-import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleProjection;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 import org.nutri.app.nutri_app_api.security.models.users.Patient;
-import org.nutri.app.nutri_app_api.security.repositories.AuthRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -25,30 +31,39 @@ import java.util.stream.Collectors;
 @Service
 public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
-    private final ProfileRepository nutritionistRepository;
-    private final AppointmentRepository appointmentRepository;
+    private final NutritionistRepository nutritionistRepository;
     private final PatientRepository patientRepository;
+    private final LocationRepository locationRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final AppointmentStatusRepository appointmentStatusRepository;
 
-    public ScheduleServiceImpl(ScheduleRepository scheduleRepository, ProfileRepository nutritionistRepository, AppointmentRepository appointmentRepository, PatientRepository patientRepository) {
+    public ScheduleServiceImpl(ScheduleRepository scheduleRepository,
+                               NutritionistRepository nutritionistRepository,
+                               PatientRepository patientRepository,
+                               LocationRepository locationRepository,
+                               AppointmentRepository appointmentRepository,
+                               AppointmentStatusRepository appointmentStatusRepository) {
         this.scheduleRepository = scheduleRepository;
         this.nutritionistRepository = nutritionistRepository;
-        this.appointmentRepository = appointmentRepository;
         this.patientRepository = patientRepository;
+        this.locationRepository = locationRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.appointmentStatusRepository = appointmentStatusRepository;
     }
 
     @Override
     public void deleteSchedule(UUID userId, UUID scheduleId) {
-        Schedule schedule = scheduleRepository
-                .findFirstById(scheduleId)
+        Schedule scheduleToDelete = scheduleRepository
+                .findById(scheduleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Horário", "id", scheduleId.toString()));
 
-        Nutritionist nutritionist = nutritionistRepository
-                .findFirstByUser_Id(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "id", userId.toString()));
+        UUID ownerUserId = scheduleToDelete.getLocation().getNutritionist().getUser().getId();
 
-        nutritionist.getSchedules().remove(schedule);
+        if (!ownerUserId.equals(userId)) {
+            throw new ConflictException("Você não tem permissão para deletar este horário.");
+        }
 
-        nutritionistRepository.save(nutritionist);
+        scheduleRepository.delete(scheduleToDelete);
     }
 
     @Override
@@ -97,12 +112,19 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public OwnScheduleDTO createSchedule(UUID userId, ScheduleCreateDTO scheduleDTO) {
+    public OwnScheduleDTO createSchedule(UUID userId, UUID locationId, ScheduleCreateDTO scheduleDTO) {
         Nutritionist nutritionist = nutritionistRepository.findFirstByUser_Id(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Farmacêutico", "id", userId.toString()));
+                .orElseThrow(() -> new ResourceNotFoundException("Nutricionista", "id", userId.toString()));
+
+        Location location = locationRepository
+                .findById(locationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Localidade", "id", locationId.toString()));
+
+        if (!location.getNutritionist().getId().equals(nutritionist.getId())) {
+            throw new ConflictException("Este local de atendimento não pertence ao nutricionista logado.");
+        }
 
         CustomLocalDateTime startLocalDateTime = scheduleDTO.getStartLocalDateTime();
-
         LocalDateTime scheduleStart = LocalDateTime.of(
                 startLocalDateTime.getYear(),
                 startLocalDateTime.getMonth(),
@@ -111,40 +133,25 @@ public class ScheduleServiceImpl implements ScheduleService {
                 startLocalDateTime.getMinute());
         LocalDateTime scheduleEnd = scheduleStart.plusMinutes(scheduleDTO.getDurationMinutes());
 
-        if (verifyNutritionistHasOverlapSchedule(nutritionist, scheduleStart, scheduleEnd)) {
-            throw new ConflictException("Schedule is already booked");
-        }
-
-        if (appointmentRepository.hasOverlappingAppointment(nutritionist.getId(), scheduleStart, scheduleEnd)) {
-            throw new ConflictException("This time slot overlaps with an existing scheduled appointment.");
-        }
-
         if (scheduleStart.isBefore(LocalDateTime.now())) {
-            throw new ConflictException("Schedule can't be on past");
+            throw new ConflictException("Não é possível criar horários no passado.");
+        }
+
+        if (scheduleRepository.existsOverlappingSchedule(nutritionist.getId(), scheduleStart, scheduleEnd)) {
+            throw new ConflictException("Este horário sobrepõe um horário de disponibilidade ou consulta já existente.");
         }
 
         Schedule schedule = new Schedule();
-
         schedule.setDurationMinutes(scheduleDTO.getDurationMinutes());
         schedule.setStartTime(scheduleStart);
+        schedule.setLocation(location); // Apenas associe a localização
 
-        nutritionist.getSchedules().add(schedule);
-        schedule.setNutritionist(nutritionist);
+        Schedule savedSchedule = scheduleRepository.save(schedule);
 
-
-        // It doesn't save a new nutritionist - if nutritionist has id, it updates. Otherwise, it creates a new one
-        Nutritionist savedNutritionist = nutritionistRepository.save(nutritionist);
-        Schedule savedSchedule = savedNutritionist
-                .getSchedules()
-                .stream()
-                .filter(s -> s.getStartTime().isEqual(scheduleStart))
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Erro ao criar horário"));
-
-        return createScheduleCreateDTO(savedSchedule);
+        return createOwnScheduleDTO(savedSchedule);
     }
 
-    private OwnScheduleDTO createScheduleCreateDTO(Schedule savedSchedule) {
+    private OwnScheduleDTO createOwnScheduleDTO(Schedule savedSchedule) {
         OwnScheduleDTO dto = new OwnScheduleDTO();
 
         dto.setId(savedSchedule.getId());
@@ -176,29 +183,19 @@ public class ScheduleServiceImpl implements ScheduleService {
         String patientName = projection.getPatientName() != null ? projection.getPatientName() : "Vaga Disponível";
 
         AppointmentStatusName status = projection.getStatus() != null
-            ? AppointmentStatusName.valueOf(projection.getStatus())
-            : AppointmentStatusName.DISPONIVEL; // Supondo que você tenha um status 'DISPONIVEL' no enum
+                ? AppointmentStatusName.valueOf(projection.getStatus())
+                : AppointmentStatusName.DISPONIVEL;
 
         PatientSearchByNameDTO patientDTO = new PatientSearchByNameDTO();
         patientDTO.setName(patientName);
         patientDTO.setEmail(projection.getPatientEmail());
         patientDTO.setId(projection.getPatientId());
 
+        OwnLocationResponse location = new OwnLocationResponse();
+        location.setId(projection.getLocationId().toString());
+        location.setAddress(projection.getAddress());
+
         // 5. Criação do DTO
-        return new OwnScheduleDTO(id, startTime, durationMinutes, type, patientDTO, status);
-    }
-
-    private boolean verifyNutritionistHasOverlapSchedule(Nutritionist nutritionist,
-                                                       LocalDateTime scheduleStart,
-                                                       LocalDateTime scheduleEnd) {
-        return nutritionist.getSchedules().stream().anyMatch(
-                avail -> {
-                    LocalDateTime start = avail.getStartTime();
-                    Integer duration = avail.getDurationMinutes();
-                    LocalDateTime end = start.plusMinutes(duration);
-
-                    return (scheduleEnd.isAfter(start) && scheduleStart.isBefore(end));
-                }
-        );
+        return new OwnScheduleDTO(id, startTime, durationMinutes, type, patientDTO, status, location);
     }
 }

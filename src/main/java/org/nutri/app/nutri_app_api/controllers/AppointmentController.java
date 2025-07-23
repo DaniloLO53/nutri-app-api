@@ -5,6 +5,7 @@ import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.NutritionistFutureAp
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.CreateAppointmentDTO;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.PatientFutureAppointmentDTO;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.ResponseToCreateAppointment;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.appointmentService.AppointmentService;
@@ -63,13 +64,27 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
     }
 
-    @DeleteMapping("nutritionists/me/appointments/{appointmentId}")
+    @DeleteMapping("/nutritionists/me/appointments/{appointmentId}")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<ResponseToCreateAppointment> deleteAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
+    public ResponseEntity<OwnScheduleDTO> deleteCanceledAppointment(
+            Authentication authentication,
+            @PathVariable UUID appointmentId) {
+
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.deleteAppointment(userId, appointmentId);
+        OwnScheduleDTO savedScheduleDTO = appointmentService.deleteCanceledAppointment(userId, appointmentId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedScheduleDTO);
+    }
+
+    @PostMapping("nutritionists/me/appointments/{appointmentId}")
+    @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
+    public ResponseEntity<ResponseToCreateAppointment> cancelAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UUID userId = userDetails.getId();
+
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.cancelAppointment(userId, appointmentId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }
