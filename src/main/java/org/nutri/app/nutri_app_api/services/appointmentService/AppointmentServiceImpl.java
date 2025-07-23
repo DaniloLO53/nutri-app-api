@@ -1,6 +1,5 @@
 package org.nutri.app.nutri_app_api.services.appointmentService;
 
-import org.modelmapper.ModelMapper;
 import org.nutri.app.nutri_app_api.exceptions.ConflictException;
 import org.nutri.app.nutri_app_api.exceptions.ForbiddenException;
 import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
@@ -11,16 +10,17 @@ import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.*;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.AppointmentOrSchedule;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
 import org.nutri.app.nutri_app_api.repositories.AppointmentStatusRepository;
-import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentNutritionistProjection;
+import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentRepository;
-import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleRepository;
 import org.nutri.app.nutri_app_api.repositories.patientRepository.PatientRepository;
-import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileRepository;
-import org.nutri.app.nutri_app_api.security.models.users.Patient;
+import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
+import org.nutri.app.nutri_app_api.security.models.users.Patient;
 import org.nutri.app.nutri_app_api.security.models.users.RoleName;
+import org.nutri.app.nutri_app_api.security.models.users.User;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,157 +33,83 @@ import java.util.stream.Collectors;
 public class AppointmentServiceImpl implements AppointmentService {
     private final static String DEFAULT_STATUS_NAME = AppointmentStatusName.AGENDADO.name();
 
-    private final ModelMapper modelMapper;
     private final AppointmentRepository appointmentRepository;
     private final AppointmentStatusRepository appointmentStatusRepository;
-    private final ProfileRepository nutritionistRepository;
     private final PatientRepository patientRepository;
-    private final ScheduleRepository nutritionistScheduleRepository;
     private final ScheduleRepository scheduleRepository;
 
     public AppointmentServiceImpl(
-            ModelMapper modelMapper,
             AppointmentRepository appointmentRepository,
             AppointmentStatusRepository appointmentStatusRepository,
-            ProfileRepository nutritionistRepository,
             PatientRepository patientRepository,
-            ScheduleRepository nutritionistScheduleRepository, ScheduleRepository scheduleRepository) {
-        this.modelMapper = modelMapper;
+            ScheduleRepository scheduleRepository) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentStatusRepository = appointmentStatusRepository;
-        this.nutritionistRepository = nutritionistRepository;
         this.patientRepository = patientRepository;
-        this.nutritionistScheduleRepository = nutritionistScheduleRepository;
         this.scheduleRepository = scheduleRepository;
     }
 
     @Override
     @Transactional
-    public ResponseToCreateAppointment deleteAppointment(UUID userId, UUID appointmentId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", appointmentId.toString()));
-
-        // Verifique se o usuário que está pedindo a exclusão é o paciente ou o farmacêutico da consulta
-        UUID patientUserId = appointment.getPatient().getUser().getId();
-        UUID nutritionistUserId = appointment.getSchedule().getNutritionist().getUser().getId();
-        if (!userId.equals(patientUserId) && !userId.equals(nutritionistUserId)) {
-            throw new ForbiddenException("You are not authorized to delete this appointment.");
-        }
+    public OwnScheduleDTO deleteCanceledAppointment(UUID userId, UUID appointmentId) {
+        Appointment appointment = appointmentRepository
+                .findFirstById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
 
         Schedule schedule = appointment.getSchedule();
+        authorizeAppointmentAction(userId, appointment);
 
+        // Desvincular as entidades antes de deletar.
+        // Remove a referência do schedule para o appointment que será deletado.
         if (schedule != null) {
             schedule.setAppointment(null);
-            // Não é estritamente necessário salvar aqui, o 'dirty checking' do @Transactional faria isso,
-            // mas ser explícito ajuda na clareza.
-            scheduleRepository.save(schedule);
         }
-
         appointmentRepository.delete(appointment);
 
-        ResponseToCreateAppointment responseToCreateAppointment = new ResponseToCreateAppointment();
+        return createOwnScheduleDTO(schedule);
+    }
 
-        responseToCreateAppointment.setId(appointment.getId());
-        responseToCreateAppointment.setType(AppointmentOrSchedule.APPOINTMENT);
-        responseToCreateAppointment.setStatus(AppointmentStatusName.valueOf(appointment.getAppointmentStatus().getName()));
-        responseToCreateAppointment.setDurationMinutes(appointment.getSchedule().getDurationMinutes());
-        responseToCreateAppointment.setStartTime(appointment.getSchedule().getStartTime());
+    @Override
+    @Transactional
+    public ResponseToCreateAppointment cancelAppointment(UUID userId, UUID appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
 
-        PatientSearchByNameDTO patientSearchByNameDTO = new PatientSearchByNameDTO();
-        patientSearchByNameDTO.setId(appointment.getId());
-        patientSearchByNameDTO.setName(appointment.getPatient().getUser().getFirstName() + " " + appointment.getPatient().getUser().getLastName());
-        patientSearchByNameDTO.setEmail(appointment.getPatient().getUser().getEmail());
+        authorizeAppointmentAction(userId, appointment);
 
-        responseToCreateAppointment.setPatient(patientSearchByNameDTO);
+        AppointmentStatus canceledStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CANCELADO.name())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CANCELADO.name()));
 
-        return responseToCreateAppointment;
+        appointment.setAppointmentStatus(canceledStatus);
+
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        return toResponseDTO(updatedAppointment);
     }
 
     @Override
     @Transactional
     public ResponseToCreateAppointment createAppointment(UserDetailsImpl userDetails, CreateAppointmentDTO createAppointmentDTO) {
-        UUID userId = userDetails.getId();
-        String userRole = userDetails.getAuthorities().iterator().next().getAuthority();
+        Schedule schedule = scheduleRepository.findById(createAppointmentDTO.getScheduleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Disponibilidade", "id", createAppointmentDTO.getScheduleId().toString()));
 
-        UUID patientIdOrUserId =  createAppointmentDTO.getPatientId();
-        UUID nutritionistScheduleId = createAppointmentDTO.getScheduleId();
-        Boolean isRemote = createAppointmentDTO.getIsRemote();
+        Patient patient = findPatient(userDetails, createAppointmentDTO.getPatientId());
 
-        Schedule schedule = nutritionistScheduleRepository.findFirstById(nutritionistScheduleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Disponibilidade", "id", nutritionistScheduleId.toString()));
+        Nutritionist scheduleOwner = schedule.getLocation().getNutritionist();
+        validateAppointmentCreation(userDetails, patient, schedule, scheduleOwner);
 
-        Patient patient;
-        if (userRole.equals(RoleName.ROLE_NUTRITIONIST.name())) {
-            patient = patientRepository.findById(patientIdOrUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", patientIdOrUserId.toString()));
-        } else {
-            patient = patientRepository.findFirstByUser_Id(patientIdOrUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "id", patientIdOrUserId.toString()));
-        }
-
-        Nutritionist nutritionist = nutritionistRepository
-                .findById(schedule.getNutritionist().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Farmacêutico", "id", schedule.getNutritionist().getId().toString()));
-
-        if (userRole.equals(RoleName.ROLE_PATIENT.name()) && !patient.getUser().getId().equals(userId)) {
-            throw new ForbiddenException("Pacientes só podem criar consultas para si mesmos");
-        }
-
-        if (userRole.equals(RoleName.ROLE_NUTRITIONIST.name()) && !nutritionist.getUser().getId().equals(userId)) {
-            throw new ForbiddenException("Nutricionistas só podem criar consultas para si mesmos");
-        }
-
-        AppointmentStatus appointmentStatus = appointmentStatusRepository.findFirstByName(DEFAULT_STATUS_NAME)
+        AppointmentStatus defaultStatus = appointmentStatusRepository.findFirstByName(DEFAULT_STATUS_NAME)
                 .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", DEFAULT_STATUS_NAME));
 
-        boolean patientHasAppointment = appointmentRepository.patientAlreadyHasSchedule(patient.getId(),AppointmentStatusName.AGENDADO.name(), AppointmentStatusName.CONFIRMADO.name(), schedule.getStartTime());
-        if (patientHasAppointment) {
-            throw new ConflictException("Esse paciente já possui consulta agendada");
-        }
+        Appointment newAppointment = new Appointment();
+        newAppointment.setSchedule(schedule);
+        newAppointment.setPatient(patient);
+        newAppointment.setAppointmentStatus(defaultStatus);
+        newAppointment.setIsRemote(createAppointmentDTO.getIsRemote());
 
-        // Verifica se a vaga escolhida já está associada a outra consulta.
-        if (schedule.getAppointment() != null) {
-            throw new ConflictException("Esse horário já está agendado");
-        }
+        Appointment savedAppointment = appointmentRepository.save(newAppointment);
 
-        Appointment appointment = new Appointment();
-
-        appointment.setAppointmentStatus(appointmentStatus);
-        appointment.setPatient(patient);
-        appointment.setIsRemote(isRemote);
-
-        appointment.setSchedule(schedule);
-
-        Appointment savedAppointment = appointmentRepository.save(appointment);
-
-        NutritionistFutureAppointmentDTO nutritionistFutureAppointmentDTO = new NutritionistFutureAppointmentDTO();
-        nutritionistFutureAppointmentDTO.setId(savedAppointment.getId().toString());
-        nutritionistFutureAppointmentDTO.setStartTime(savedAppointment.getSchedule().getStartTime());
-        nutritionistFutureAppointmentDTO.setDurationMinutes(savedAppointment.getSchedule().getDurationMinutes());
-        nutritionistFutureAppointmentDTO.setType(EventType.APPOINTMENT);
-
-        NutritionistFutureAppointmentPatientDTO appointmentPatient = new NutritionistFutureAppointmentPatientDTO();
-        appointmentPatient.setName(patient.getUser().getFirstName() + " " + patient.getUser().getLastName());
-        appointmentPatient.setEmail(patient.getUser().getEmail());
-        appointmentPatient.setId(patientIdOrUserId);
-        nutritionistFutureAppointmentDTO.setPatient(appointmentPatient);
-
-        ResponseToCreateAppointment responseToCreateAppointment = new ResponseToCreateAppointment();
-
-        responseToCreateAppointment.setId(savedAppointment.getId());
-        responseToCreateAppointment.setType(AppointmentOrSchedule.APPOINTMENT);
-        responseToCreateAppointment.setStatus(AppointmentStatusName.valueOf(savedAppointment.getAppointmentStatus().getName()));
-        responseToCreateAppointment.setDurationMinutes(savedAppointment.getSchedule().getDurationMinutes());
-        responseToCreateAppointment.setStartTime(savedAppointment.getSchedule().getStartTime());
-
-        PatientSearchByNameDTO patientSearchByNameDTO = new PatientSearchByNameDTO();
-        patientSearchByNameDTO.setId(savedAppointment.getId());
-        patientSearchByNameDTO.setName(savedAppointment.getPatient().getUser().getFirstName() + " " + savedAppointment.getPatient().getUser().getLastName());
-        patientSearchByNameDTO.setEmail(savedAppointment.getPatient().getUser().getEmail());
-
-        responseToCreateAppointment.setPatient(patientSearchByNameDTO);
-
-        return responseToCreateAppointment;
+        return toResponseDTO(savedAppointment);
     }
 
     @Override
@@ -195,6 +121,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             patientFutureAppointmentDTO.setId(projection.getId().toString());
             patientFutureAppointmentDTO.setIsRemote(projection.getIsRemote());
+            patientFutureAppointmentDTO.setAddress(projection.getAddress());
             patientFutureAppointmentDTO.setStartTime(projection.getStartTime());
             patientFutureAppointmentDTO.setDurationMinutes(projection.getDurationMinutes());
             patientFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
@@ -220,6 +147,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             nutritionistFutureAppointmentDTO.setId(projection.getId().toString());
             nutritionistFutureAppointmentDTO.setIsRemote(projection.getIsRemote());
+            nutritionistFutureAppointmentDTO.setAddress(projection.getAddress());
             nutritionistFutureAppointmentDTO.setStartTime(projection.getStartTime());
             nutritionistFutureAppointmentDTO.setDurationMinutes(projection.getDurationMinutes());
             nutritionistFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
@@ -234,5 +162,83 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             return nutritionistFutureAppointmentDTO;
         }).collect(Collectors.toSet());
+    }
+
+    private OwnScheduleDTO createOwnScheduleDTO(Schedule savedSchedule) {
+        OwnScheduleDTO dto = new OwnScheduleDTO();
+
+        dto.setId(savedSchedule.getId());
+        dto.setStartTime(savedSchedule.getStartTime());
+        dto.setDurationMinutes(savedSchedule.getDurationMinutes());
+        dto.setType(AppointmentOrSchedule.SCHEDULE);
+        dto.setStatus(AppointmentStatusName.AGENDADO);
+
+        return dto;
+    }
+
+    private void authorizeAppointmentAction(UUID loggedInUserId, Appointment appointment) {
+        UUID patientUserId = appointment.getPatient().getUser().getId();
+
+        UUID nutritionistUserId = appointment.getSchedule().getLocation().getNutritionist().getUser().getId();
+
+        if (!loggedInUserId.equals(patientUserId) && !loggedInUserId.equals(nutritionistUserId)) {
+            throw new ForbiddenException("Você não tem permissão para modificar esta consulta.");
+        }
+    }
+
+    private Patient findPatient(UserDetailsImpl userDetails, UUID patientIdFromDTO) {
+        if (userDetails.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals(RoleName.ROLE_NUTRITIONIST.name()))) {
+            return patientRepository.findById(patientIdFromDTO)
+                    .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id", patientIdFromDTO.toString()));
+        } else {
+            return patientRepository.findFirstByUser_Id(userDetails.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id de usuário", userDetails.getId().toString()));
+        }
+    }
+
+    private void validateAppointmentCreation(UserDetailsImpl userDetails, Patient patient, Schedule schedule, Nutritionist scheduleOwner) {
+        String userRole = userDetails.getAuthorities().iterator().next().getAuthority();
+        UUID loggedInUserId = userDetails.getId();
+
+        if (userRole.equals(RoleName.ROLE_PATIENT.name()) && !patient.getUser().getId().equals(loggedInUserId)) {
+            throw new ForbiddenException("Pacientes só podem criar consultas para si mesmos.");
+        }
+
+        if (userRole.equals(RoleName.ROLE_NUTRITIONIST.name()) && !scheduleOwner.getUser().getId().equals(loggedInUserId)) {
+            throw new ForbiddenException("Nutricionistas só podem criar consultas em sua própria agenda.");
+        }
+
+        if (schedule.getAppointment() != null) {
+            throw new ConflictException("Este horário já está agendado.");
+        }
+
+        boolean patientHasAppointment = appointmentRepository.patientAlreadyHasSchedule(
+                patient.getId(),
+                AppointmentStatusName.AGENDADO.name(),
+                AppointmentStatusName.CONFIRMADO.name(),
+                schedule.getStartTime()
+        );
+        if (patientHasAppointment) {
+            throw new ConflictException("Este paciente já possui uma consulta neste mesmo dia e horário.");
+        }
+    }
+
+    private ResponseToCreateAppointment toResponseDTO(Appointment appointment) {
+        ResponseToCreateAppointment dto = new ResponseToCreateAppointment();
+        dto.setId(appointment.getId());
+        dto.setType(AppointmentOrSchedule.APPOINTMENT);
+        dto.setStatus(AppointmentStatusName.valueOf(appointment.getAppointmentStatus().getName()));
+        dto.setDurationMinutes(appointment.getSchedule().getDurationMinutes());
+        dto.setStartTime(appointment.getSchedule().getStartTime());
+
+        PatientSearchByNameDTO patientDTO = new PatientSearchByNameDTO();
+        User patientUser = appointment.getPatient().getUser();
+        patientDTO.setId(appointment.getPatient().getId());
+        patientDTO.setName(patientUser.getFirstName() + " " + patientUser.getLastName());
+        patientDTO.setEmail(patientUser.getEmail());
+
+        dto.setPatient(patientDTO);
+
+        return dto;
     }
 }

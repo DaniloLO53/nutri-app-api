@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Repository
-public interface ProfileRepository extends JpaRepository<Nutritionist, UUID>, ProfileRepositoryCustom {
+public interface NutritionistRepository extends JpaRepository<Nutritionist, UUID>, NutritionistRepositoryCustom {
     Optional<Nutritionist> findFirstByUser_Id(UUID userId);
 
     @Query(

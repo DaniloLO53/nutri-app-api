@@ -55,7 +55,7 @@ public class Appointment {
 
     // TODO: test all possibilities for CRUD at appointments -> delete an user (nutritionist and/or patient) and see what happens with appointments. Try to handle it with
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "patient_id", referencedColumnName = "id")
     private Patient patient;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })

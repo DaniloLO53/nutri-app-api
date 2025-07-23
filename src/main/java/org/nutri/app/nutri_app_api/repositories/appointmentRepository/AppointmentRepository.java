@@ -14,18 +14,16 @@ import java.util.UUID;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
-    Boolean existsByPatient(Patient patient);
-
     @Query(
             nativeQuery = true,
             value = "SELECT EXISTS (" +
                     "SELECT 1 " +
                     "FROM appointments a " +
-                    "JOIN appointments_status s ON a.appointments_status_id = s.id " +
-                    "JOIN schedules pa ON a.schedule_id = pa.id " +
+                    "JOIN schedules s ON a.schedule_id = s.id " +
+                    "JOIN appointments_status aps ON a.appointments_status_id = aps.id " +
                     "WHERE a.patient_id = :patientId " +
-                    "AND s.name IN (:statusName1, :statusName2) " +
-                    "AND pa.start_time > :startTime);"
+                    "AND aps.name IN (:statusName1, :statusName2) " +
+                    "AND s.start_time > :startTime);"
     )
     boolean patientAlreadyHasSchedule(
             @Param("patientId") UUID patientId,
@@ -38,10 +36,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             nativeQuery = true,
             value = "SELECT EXISTS (" +
                     "SELECT 1 FROM appointments a " +
-                    "JOIN schedules pa ON a.schedule_id = pa.id " +
-                    "WHERE pa.nutritionist_id = :nutritionistId " +
-                    "AND :newAppointmentStart < (pa.start_time + (pa.duration_minutes * INTERVAL '1 minute')) " +
-                    "AND :newAppointmentEnd > pa.start_time);"
+                    "JOIN schedules s ON a.schedule_id = s.id " +
+                    "JOIN locations l ON s.location_id = l.id " +
+                    "WHERE l.nutritionist_id = :nutritionistId " +
+                    "AND :newAppointmentStart < (s.start_time + (s.duration_minutes * INTERVAL '1 minute')) " +
+                    "AND :newAppointmentEnd > s.start_time);"
     )
     boolean hasOverlappingAppointment(
             @Param("nutritionistId") UUID nutritionistId,
@@ -52,14 +51,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     @Query(
             nativeQuery = true,
             value = "SELECT a.id, CONCAT(u_nutritionist.first_name, ' ', u_nutritionist.last_name) AS nutritionistName, " +
-                    "u_nutritionist.email AS nutritionistEmail, u_nutritionist.id AS nutritionistId, pa.start_time AS startTime, " +
-                    "pa.duration_minutes AS durationMinutes, aps.name AS status, a.is_remote AS isRemote " +
+                    "u_nutritionist.email AS nutritionistEmail, u_nutritionist.id AS nutritionistId, s.start_time AS startTime, " +
+                    "s.duration_minutes AS durationMinutes, aps.name AS status, a.is_remote AS isRemote " +
                     "FROM appointments a " +
                     "LEFT JOIN appointments_status aps ON aps.id = a.appointments_status_id " +
                     "LEFT JOIN patients pt ON pt.id = a.patient_id " +
-                    "LEFT JOIN schedules pa ON pa.id = a.schedule_id " +
-                    "LEFT JOIN nutritionists p ON p.id = pa.nutritionist_id " +
-                    "LEFT JOIN users u_nutritionist ON u_nutritionist.id = p.user_id " +
+                    "LEFT JOIN schedules s ON s.id = a.schedule_id " +
+                    "LEFT JOIN locations l ON l.id = s.location_id " +
+                    "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
+                    "LEFT JOIN users u_nutritionist ON u_nutritionist.id = pt.user_id " +
                     "WHERE pt.user_id = :userIdPlaceholder " +
                     "AND aps.name IN ('AGENDADO', 'CONFIRMADO');"
     )
@@ -77,7 +77,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN patients pt ON pt.id = a.patient_id " +
                     "LEFT JOIN schedules s ON s.id = a.schedule_id " +
                     "LEFT JOIN locations l ON l.id = s.location_id " +
-                    "LEFT JOIN nutritionists n ON n.id = s.nutritionist_id " +
+                    "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
                     "LEFT JOIN users u_patient ON u_patient.id = pt.user_id " +
                     "WHERE n.user_id = :userId " +
                     "AND aps.name IN ('AGENDADO', 'CONFIRMADO');"

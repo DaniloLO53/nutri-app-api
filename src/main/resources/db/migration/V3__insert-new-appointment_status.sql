@@ -1,0 +1,1 @@
+INSERT INTO appointments_status(name) VALUES ('DISPONIVEL');
