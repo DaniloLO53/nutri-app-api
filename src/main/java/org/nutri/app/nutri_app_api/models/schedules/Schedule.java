@@ -6,7 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.nutri.app.nutri_app_api.models.appointments.Appointment;
-import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
+import org.nutri.app.nutri_app_api.models.locations.Location;
 import org.nutri.app.nutri_app_api.validations.allowedDurations.AllowedDurations;
 
 import java.time.LocalDateTime;
@@ -40,8 +40,8 @@ public class Schedule {
     private Integer durationMinutes;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "nutritionist_id", referencedColumnName = "id", nullable = false)
-    private Nutritionist nutritionist;
+    @JoinColumn(name = "location_id", referencedColumnName = "id", nullable = false)
+    private Location location;
 
     @OneToOne(mappedBy = "schedule")
     private Appointment appointment;

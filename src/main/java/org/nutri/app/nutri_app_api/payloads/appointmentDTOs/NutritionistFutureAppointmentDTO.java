@@ -21,4 +21,5 @@ public class NutritionistFutureAppointmentDTO {
     private @NotNull EventType type;
     private @NotNull AppointmentStatusName status;
     private @NotNull Boolean isRemote;
+    private @NotNull String address;
 }

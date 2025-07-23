@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.models.locations.Location;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileByParamsProjection;
 
@@ -72,9 +71,6 @@ public class Nutritionist {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;
-
-    @OneToMany(mappedBy = "nutritionist", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
-    private Set<Schedule> schedules;
 
     @OneToMany(mappedBy = "nutritionist", cascade = { CascadeType.ALL }, orphanRemoval = true)
     private Set<Location> locations;
