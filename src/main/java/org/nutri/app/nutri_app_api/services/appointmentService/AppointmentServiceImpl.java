@@ -8,6 +8,7 @@ import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatus;
 import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatusName;
 import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.*;
+import org.nutri.app.nutri_app_api.payloads.locationDTOs.OwnLocationResponse;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.AppointmentOrSchedule;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
@@ -71,7 +72,25 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public ResponseToCreateAppointment cancelAppointment(UUID userId, UUID appointmentId) {
+    public ResponseToCreateAppointment cancelAppointmentByNutritionist(UUID userId, UUID appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
+
+        authorizeAppointmentAction(userId, appointment);
+
+        AppointmentStatus canceledStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CANCELADO.name())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CANCELADO.name()));
+
+        appointment.setAppointmentStatus(canceledStatus);
+
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        return toResponseDTO(updatedAppointment);
+    }
+
+    @Override
+    @Transactional
+    public ResponseToCreateAppointment cancelAppointmentByPatient(UUID userId, UUID appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
 
@@ -113,28 +132,33 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public Set<PatientFutureAppointmentDTO> getPatientFutureAppointments(UUID userId) {
-        Set<AppointmentPatientProjection> projections = appointmentRepository.findPatientFutureAppointments(userId);
+    public Set<PatientAppointmentResponse> getPatientAppointments(UUID userId) {
+        Set<AppointmentPatientProjection> projections = appointmentRepository.getPatientAppointments(userId);
 
         return projections.stream().map(projection -> {
-            PatientFutureAppointmentDTO patientFutureAppointmentDTO = new PatientFutureAppointmentDTO();
+            PatientAppointmentResponse patientAppointmentResponse = new PatientAppointmentResponse();
 
-            patientFutureAppointmentDTO.setId(projection.getId().toString());
-            patientFutureAppointmentDTO.setIsRemote(projection.getIsRemote());
-            patientFutureAppointmentDTO.setAddress(projection.getAddress());
-            patientFutureAppointmentDTO.setStartTime(projection.getStartTime());
-            patientFutureAppointmentDTO.setDurationMinutes(projection.getDurationMinutes());
-            patientFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
-            patientFutureAppointmentDTO.setType(EventType.APPOINTMENT);
+            patientAppointmentResponse.setId(projection.getId().toString());
+            patientAppointmentResponse.setIsRemote(projection.getIsRemote());
 
-            PatientFutureAppointmentNutritionistDTO patientFutureAppointmentNutritionistDTO = new PatientFutureAppointmentNutritionistDTO();
-            patientFutureAppointmentNutritionistDTO.setId(projection.getNutritionistId());
-            patientFutureAppointmentNutritionistDTO.setName(projection.getNutritionistName());
-            patientFutureAppointmentNutritionistDTO.setEmail(projection.getNutritionistEmail());
+            OwnLocationResponse location = new OwnLocationResponse();
+            location.setId(projection.getLocationId());
+            location.setAddress(projection.getAddress());
+            patientAppointmentResponse.setLocation(location);
 
-            patientFutureAppointmentDTO.setNutritionist(patientFutureAppointmentNutritionistDTO);
+            patientAppointmentResponse.setStartTime(projection.getStartTime());
+            patientAppointmentResponse.setDurationMinutes(projection.getDurationMinutes());
+            patientAppointmentResponse.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
+            patientAppointmentResponse.setType(EventType.APPOINTMENT);
 
-            return patientFutureAppointmentDTO;
+            PatientAppointmentResponseNutritionistDTO patientAppointmentResponseNutritionistDTO = new PatientAppointmentResponseNutritionistDTO();
+            patientAppointmentResponseNutritionistDTO.setId(projection.getNutritionistId());
+            patientAppointmentResponseNutritionistDTO.setName(projection.getNutritionistName());
+            patientAppointmentResponseNutritionistDTO.setEmail(projection.getNutritionistEmail());
+
+            patientAppointmentResponse.setNutritionist(patientAppointmentResponseNutritionistDTO);
+
+            return patientAppointmentResponse;
         }).collect(Collectors.toSet());
     }
 
@@ -153,12 +177,12 @@ public class AppointmentServiceImpl implements AppointmentService {
             nutritionistFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
             nutritionistFutureAppointmentDTO.setType(EventType.APPOINTMENT);
 
-            NutritionistFutureAppointmentPatientDTO nutritionistFutureAppointmentPatientDTO = new NutritionistFutureAppointmentPatientDTO();
-            nutritionistFutureAppointmentPatientDTO.setId(projection.getPatientId());
-            nutritionistFutureAppointmentPatientDTO.setName(projection.getPatientName());
-            nutritionistFutureAppointmentPatientDTO.setEmail(projection.getPatientEmail());
+            NutritionistAppointmentResponsePatientDTO nutritionistAppointmentResponsePatientDTO = new NutritionistAppointmentResponsePatientDTO();
+            nutritionistAppointmentResponsePatientDTO.setId(projection.getPatientId());
+            nutritionistAppointmentResponsePatientDTO.setName(projection.getPatientName());
+            nutritionistAppointmentResponsePatientDTO.setEmail(projection.getPatientEmail());
 
-            nutritionistFutureAppointmentDTO.setPatient(nutritionistFutureAppointmentPatientDTO);
+            nutritionistFutureAppointmentDTO.setPatient(nutritionistAppointmentResponsePatientDTO);
 
             return nutritionistFutureAppointmentDTO;
         }).collect(Collectors.toSet());

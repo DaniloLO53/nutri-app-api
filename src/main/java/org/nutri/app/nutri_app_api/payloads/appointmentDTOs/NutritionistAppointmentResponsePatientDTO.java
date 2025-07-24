@@ -11,7 +11,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NutritionistFutureAppointmentPatientDTO {
+public class NutritionistAppointmentResponsePatientDTO {
     private @NotNull UUID id;
     private @NotNull String name;
     private @NotNull @Email String email;

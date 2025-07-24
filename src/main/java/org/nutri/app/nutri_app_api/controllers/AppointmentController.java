@@ -1,12 +1,11 @@
 package org.nutri.app.nutri_app_api.controllers;
 
 import jakarta.validation.Valid;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.NutritionistFutureAppointmentDTO;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.CreateAppointmentDTO;
-import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.PatientFutureAppointmentDTO;
+import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.NutritionistFutureAppointmentDTO;
+import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.PatientAppointmentResponse;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.ResponseToCreateAppointment;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
-import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentPatientProjection;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.appointmentService.AppointmentService;
 import org.springframework.http.HttpStatus;
@@ -44,11 +43,11 @@ public class AppointmentController {
 
     @GetMapping("/patients/me/appointments")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
-    public ResponseEntity<Set<PatientFutureAppointmentDTO>> getPatientFutureAppointments(Authentication authentication) {
+    public ResponseEntity<Set<PatientAppointmentResponse>> getPatientAppointments(Authentication authentication) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        Set<PatientFutureAppointmentDTO> appointments = appointmentService.getPatientFutureAppointments(userId);
+        Set<PatientAppointmentResponse> appointments = appointmentService.getPatientAppointments(userId);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
     }
@@ -80,11 +79,22 @@ public class AppointmentController {
 
     @PostMapping("nutritionists/me/appointments/{appointmentId}")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<ResponseToCreateAppointment> cancelAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
+    public ResponseEntity<ResponseToCreateAppointment> cancelAppointmentByNutritionist(Authentication authentication, @PathVariable UUID appointmentId) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.cancelAppointment(userId, appointmentId);
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.cancelAppointmentByNutritionist(userId, appointmentId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
+    }
+
+    @PostMapping("patients/me/appointments/{appointmentId}")
+    @PreAuthorize("hasRole('ROLE_PATIENT')")
+    public ResponseEntity<ResponseToCreateAppointment> cancelAppointmentByPatient(Authentication authentication, @PathVariable UUID appointmentId) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UUID userId = userDetails.getId();
+
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.cancelAppointmentByPatient(userId, appointmentId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }

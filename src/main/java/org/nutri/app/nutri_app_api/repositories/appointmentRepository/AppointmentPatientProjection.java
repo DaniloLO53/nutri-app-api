@@ -13,4 +13,5 @@ public interface AppointmentPatientProjection {
     String getStatus();
     Boolean getIsRemote();
     String getAddress();
+    String getLocationId();
 }
