@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class NutritionistFutureAppointmentDTO {
     private @NotNull String id;
-    private @NotNull NutritionistFutureAppointmentPatientDTO patient;
+    private @NotNull NutritionistAppointmentResponsePatientDTO patient;
     private @NotNull LocalDateTime startTime;
     private @NotNull @AllowedDurations Integer durationMinutes;
     private @NotNull EventType type;

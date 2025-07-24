@@ -52,7 +52,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             nativeQuery = true,
             value = "SELECT a.id, CONCAT(u_nutritionist.first_name, ' ', u_nutritionist.last_name) AS nutritionistName, " +
                     "u_nutritionist.email AS nutritionistEmail, u_nutritionist.id AS nutritionistId, s.start_time AS startTime, " +
-                    "s.duration_minutes AS durationMinutes, aps.name AS status, a.is_remote AS isRemote " +
+                    "s.duration_minutes AS durationMinutes, aps.name AS status, a.is_remote AS isRemote, l.id AS locationId, l.address AS address " +
                     "FROM appointments a " +
                     "LEFT JOIN appointments_status aps ON aps.id = a.appointments_status_id " +
                     "LEFT JOIN patients pt ON pt.id = a.patient_id " +
@@ -61,9 +61,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
                     "LEFT JOIN users u_nutritionist ON u_nutritionist.id = pt.user_id " +
                     "WHERE pt.user_id = :userIdPlaceholder " +
-                    "AND aps.name IN ('AGENDADO', 'CONFIRMADO');"
+                    "ORDER BY s.start_time DESC;"
     )
-    Set<AppointmentPatientProjection> findPatientFutureAppointments(
+    Set<AppointmentPatientProjection> getPatientAppointments(
             @Param("userIdPlaceholder") UUID userId
     );
 
