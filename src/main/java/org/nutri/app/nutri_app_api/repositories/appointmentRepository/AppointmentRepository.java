@@ -37,7 +37,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN schedules s ON s.id = a.schedule_id " +
                     "LEFT JOIN locations l ON l.id = s.location_id " +
                     "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
-                    "LEFT JOIN users u_nutritionist ON u_nutritionist.id = pt.user_id " +
+                    "LEFT JOIN users u_nutritionist ON u_nutritionist.id = n.user_id " +
                     "WHERE pt.user_id = :userIdPlaceholder " +
                     "ORDER BY s.start_time DESC;"
     )
@@ -58,7 +58,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
                     "LEFT JOIN users u_patient ON u_patient.id = pt.user_id " +
                     "WHERE n.user_id = :userId " +
-                    "AND aps.name IN ('AGENDADO', 'CONFIRMADO');"
+                    "AND aps.name IN ('AGENDADO', 'CONFIRMADO', 'CANCELADO', 'ESPERANDO_CONFIRMACAO');"
     )
     Set<AppointmentNutritionistProjection> findNutritionistFutureAppointments(
             @Param("userId") UUID userId

@@ -77,7 +77,7 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedScheduleDTO);
     }
 
-    @PostMapping("nutritionists/me/appointments/{appointmentId}")
+    @PostMapping("/nutritionists/me/appointments/{appointmentId}")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
     public ResponseEntity<ResponseToCreateAppointment> cancelAppointmentByNutritionist(Authentication authentication, @PathVariable UUID appointmentId) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -88,13 +88,35 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }
 
-    @PostMapping("patients/me/appointments/{appointmentId}")
+    @PostMapping("/patients/me/appointments/{appointmentId}")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
     public ResponseEntity<ResponseToCreateAppointment> cancelAppointmentByPatient(Authentication authentication, @PathVariable UUID appointmentId) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
         ResponseToCreateAppointment responseToCreateAppointment = appointmentService.cancelAppointmentByPatient(userId, appointmentId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
+    }
+
+    @PostMapping("/appointments/{appointmentId}/request-confirmation")
+    @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
+    public ResponseEntity<ResponseToCreateAppointment> requestAppointmentConfirmation(Authentication authentication, @PathVariable UUID appointmentId) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UUID userId = userDetails.getId();
+
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.requestAppointmentConfirmation(userId, appointmentId);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
+    }
+
+    @PostMapping("/appointments/{appointmentId}/confirm")
+    @PreAuthorize("hasRole('ROLE_PATIENT')")
+    public ResponseEntity<ResponseToCreateAppointment> confirmAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UUID userId = userDetails.getId();
+
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.confirmAppointment(userId, appointmentId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }

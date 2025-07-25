@@ -81,8 +81,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         authorizeAppointmentAction(userId, appointment);
 
-        AppointmentStatus canceledStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CANCELADO.name())
-                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CANCELADO.name()));
+        AppointmentStatus canceledStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CANCELADO.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CANCELADO.toString()));
 
         appointment.setAppointmentStatus(canceledStatus);
 
@@ -99,8 +99,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         authorizeAppointmentAction(userId, appointment);
 
-        AppointmentStatus canceledStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CANCELADO.name())
-                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CANCELADO.name()));
+        AppointmentStatus canceledStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CANCELADO.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CANCELADO.toString()));
 
         appointment.setAppointmentStatus(canceledStatus);
 
@@ -111,9 +111,44 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
+    public ResponseToCreateAppointment requestAppointmentConfirmation(UUID userId, UUID appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
+
+        authorizeAppointmentAction(userId, appointment);
+
+        AppointmentStatus waitingConfirmationStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.ESPERANDO_CONFIRMACAO.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.ESPERANDO_CONFIRMACAO.toString()));
+
+        appointment.setAppointmentStatus(waitingConfirmationStatus);
+
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        return toResponseDTO(updatedAppointment);
+    }
+
+    @Override
+    @Transactional
+    public ResponseToCreateAppointment confirmAppointment(UUID userId, UUID appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
+
+        authorizeAppointmentAction(userId, appointment);
+
+        AppointmentStatus waitingConfirmationStatus = appointmentStatusRepository.findFirstByName(AppointmentStatusName.CONFIRMADO.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", AppointmentStatusName.CONFIRMADO.toString()));
+
+        appointment.setAppointmentStatus(waitingConfirmationStatus);
+
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        return toResponseDTO(updatedAppointment);
+    }
+
+    @Override
+    @Transactional
     public ResponseToCreateAppointment createAppointment(UserDetailsImpl userDetails, CreateAppointmentDTO createAppointmentDTO) {
         UUID patientId = createAppointmentDTO.getPatientId();
-        boolean patientHasAppointment = appointmentRepository.existsScheduledOrConfirmedAppointment(patientId);
 
         Schedule schedule = scheduleRepository.findById(createAppointmentDTO.getScheduleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Disponibilidade", "id", createAppointmentDTO.getScheduleId().toString()));
