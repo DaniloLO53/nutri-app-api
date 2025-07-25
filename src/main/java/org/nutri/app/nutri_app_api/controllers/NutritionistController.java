@@ -28,12 +28,12 @@ public class NutritionistController {
     public ResponseEntity<Set<ProfileSearchParamsDTO>> getProfiles(
             @RequestParam(name = "nutritionistName", required = false) String nutritionistName,
             @RequestParam(name = "ibgeApiCity", required = false) String ibgeApiCity,
-            @RequestParam(name = "ibgeApiState") String ibgeApiState,
+            @RequestParam(name = "ibgeApiState", required = false) String ibgeApiState,
             @RequestParam(name = "acceptsRemote", required = false) String acceptsRemote) {
 
         ProfileSearchParamsDTO params = new ProfileSearchParamsDTO();
 
-        params.setAcceptsRemote(acceptsRemote);
+        params.setAcceptsRemote(Boolean.parseBoolean(acceptsRemote));
         params.setIbgeApiState(ibgeApiState);
         params.setIbgeApiCity(ibgeApiCity);
         params.setNutritionistName(nutritionistName);

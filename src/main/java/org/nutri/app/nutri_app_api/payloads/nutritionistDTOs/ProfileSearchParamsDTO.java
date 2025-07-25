@@ -29,5 +29,5 @@ public class ProfileSearchParamsDTO {
     private String ibgeApiState;
 
     @ToString.Include
-    private String acceptsRemote;
+    private Boolean acceptsRemote;
 }

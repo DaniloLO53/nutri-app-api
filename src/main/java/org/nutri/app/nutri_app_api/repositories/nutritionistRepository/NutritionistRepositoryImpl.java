@@ -20,29 +20,29 @@ public class NutritionistRepositoryImpl implements NutritionistRepositoryCustom 
         // O "WHERE 1=1" é um truque para facilitar a adição de cláusulas "AND".
         StringBuilder sql = new StringBuilder(
                 "SELECT " +
-                    "CONCAT(u.first_name, ' ', u.last_name) AS nutritionistName, " +
-                    "n.id, " +
-                    "l.address, " +
-                    "n.accepts_remote AS acceptsRemote, " +
-                    "l.ibge_api_city AS ibgeApiCity, " +
-                    "l.ibge_api_state AS ibgeApiState " +
-                "FROM " +
-                    "nutritionists n " +
-                "INNER JOIN " +
-                    "users u ON u.id = n.user_id " +
-                "INNER JOIN " +
-                    "locations l ON l.nutritionist_id = n.id " +
-                "WHERE 1=1"
+                        "CONCAT(u.first_name, ' ', u.last_name) AS nutritionistName, " +
+                        "n.id, " +
+                        "l.address, " +
+                        "n.accepts_remote AS acceptsRemote, " +
+                        "l.ibge_api_city AS ibgeApiCity, " +
+                        "l.ibge_api_state AS ibgeApiState " +
+                        "FROM " +
+                        "nutritionists n " +
+                        "INNER JOIN " +
+                        "users u ON u.id = n.user_id " +
+                        "INNER JOIN " +
+                        "locations l ON l.nutritionist_id = n.id " +
+                        "WHERE 1=1"
         );
 
         // 2. Mapa para guardar os parâmetros de forma segura (evita SQL Injection)
         Map<String, Object> params = new HashMap<>();
 
-        // 3. Adiciona as cláusulas WHERE dinamicamente
-
-        // O estado é sempre obrigatório, conforme a regra
-        sql.append(" AND l.ibge_api_state = :ibgeApiState");
-        params.put("ibgeApiState", ibgeApiState.trim().toUpperCase());
+        if (nutritionistName != null && !nutritionistName.isBlank()) {
+            // Usando um nome de parâmetro único para evitar conflito com o alias do SELECT
+            sql.append(" AND l.ibge_api_state = :ibgeApiState");
+            params.put("ibgeApiState", ibgeApiState.trim().toUpperCase());
+        }
 
         if (nutritionistName != null && !nutritionistName.isBlank()) {
             // Usando um nome de parâmetro único para evitar conflito com o alias do SELECT
@@ -55,7 +55,9 @@ public class NutritionistRepositoryImpl implements NutritionistRepositoryCustom 
             params.put("cityFilter", "%" + ibgeApiCity.trim() + "%");
         }
 
-        if (acceptsRemote != null) {
+        System.out.println("***************** ACCEPTS REMOTE: " + acceptsRemote);
+
+        if (acceptsRemote) {
             sql.append(" AND n.accepts_remote = :acceptsRemote");
             params.put("acceptsRemote", acceptsRemote);
         }

@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS patients (
 CREATE TABLE IF NOT EXISTS schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nutritionist_id UUID NOT NULL, -- atualizado para location_id
-    -- Dia da semana: 1 para Segunda, 2 para Terça, ..., 7 para Domingo
+    -- added accepts_remote
 
     start_time TIMESTAMPTZ NOT NULL,
     duration_minutes INTEGER NOT NULL DEFAULT 30,
