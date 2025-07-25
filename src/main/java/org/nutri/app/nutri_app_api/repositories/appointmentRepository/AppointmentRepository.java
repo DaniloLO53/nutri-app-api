@@ -15,38 +15,16 @@ import java.util.UUID;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, UUID> {
     @Query(
-            nativeQuery = true,
-            value = "SELECT EXISTS (" +
-                    "SELECT 1 " +
-                    "FROM appointments a " +
-                    "JOIN schedules s ON a.schedule_id = s.id " +
+            value = "SELECT a.* FROM appointments a " +
                     "JOIN appointments_status aps ON a.appointments_status_id = aps.id " +
-                    "WHERE a.patient_id = :patientId " +
-                    "AND aps.name IN (:statusName1, :statusName2) " +
-                    "AND s.start_time > :startTime);"
-    )
-    boolean patientAlreadyHasSchedule(
-            @Param("patientId") UUID patientId,
-            @Param("statusName1") String statusName1,
-            @Param("statusName2") String statusName2,
-            @Param("startTime") LocalDateTime startTime
-    );
-
-    @Query(
-            nativeQuery = true,
-            value = "SELECT EXISTS (" +
-                    "SELECT 1 FROM appointments a " +
                     "JOIN schedules s ON a.schedule_id = s.id " +
-                    "JOIN locations l ON s.location_id = l.id " +
-                    "WHERE l.nutritionist_id = :nutritionistId " +
-                    "AND :newAppointmentStart < (s.start_time + (s.duration_minutes * INTERVAL '1 minute')) " +
-                    "AND :newAppointmentEnd > s.start_time);"
+                    "WHERE a.patient_id = :patientId " +
+                    "AND aps.name IN ('AGENDADO', 'CONFIRMADO') " +
+                    "ORDER BY s.start_time ASC " +
+                    "LIMIT 1", // Pega apenas o primeiro resultado
+            nativeQuery = true
     )
-    boolean hasOverlappingAppointment(
-            @Param("nutritionistId") UUID nutritionistId,
-            @Param("newAppointmentStart") LocalDateTime newAppointmentStart,
-            @Param("newAppointmentEnd") LocalDateTime newAppointmentEnd
-    );
+    Optional<Appointment> findFirstScheduledOrConfirmedByPatient(@Param("patientId") UUID patientId);
 
     @Query(
             nativeQuery = true,
@@ -85,6 +63,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     Set<AppointmentNutritionistProjection> findNutritionistFutureAppointments(
             @Param("userId") UUID userId
     );
+
+    @Query(nativeQuery = true, value = "SELECT EXISTS (SELECT 1 FROM patients p WHERE p.id = :patientId);")
+    boolean existsScheduledOrConfirmedAppointment(@Param("patientId") UUID patientId);
 
     Optional<Appointment> findFirstById(UUID id);
 }

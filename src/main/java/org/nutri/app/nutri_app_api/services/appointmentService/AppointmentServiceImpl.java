@@ -26,6 +26,9 @@ import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -109,10 +112,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional
     public ResponseToCreateAppointment createAppointment(UserDetailsImpl userDetails, CreateAppointmentDTO createAppointmentDTO) {
+        UUID patientId = createAppointmentDTO.getPatientId();
+        boolean patientHasAppointment = appointmentRepository.existsScheduledOrConfirmedAppointment(patientId);
+
         Schedule schedule = scheduleRepository.findById(createAppointmentDTO.getScheduleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Disponibilidade", "id", createAppointmentDTO.getScheduleId().toString()));
 
-        Patient patient = findPatient(userDetails, createAppointmentDTO.getPatientId());
+        Patient patient = findPatient(userDetails, patientId);
+
 
         Nutritionist scheduleOwner = schedule.getLocation().getNutritionist();
         validateAppointmentCreation(userDetails, patient, schedule, scheduleOwner);
@@ -236,14 +243,20 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new ConflictException("Este horário já está agendado.");
         }
 
-        boolean patientHasAppointment = appointmentRepository.patientAlreadyHasSchedule(
-                patient.getId(),
-                AppointmentStatusName.AGENDADO.name(),
-                AppointmentStatusName.CONFIRMADO.name(),
-                schedule.getStartTime()
-        );
-        if (patientHasAppointment) {
-            throw new ConflictException("Este paciente já possui uma consulta neste mesmo dia e horário.");
+        Optional<Appointment> optionalExistingAppointment = appointmentRepository
+                .findFirstScheduledOrConfirmedByPatient(patient.getId());
+        if (optionalExistingAppointment.isPresent()) {
+            Appointment appointment = optionalExistingAppointment.get();
+            LocalDateTime startTime = appointment.getSchedule().getStartTime();
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm 'do dia' dd-MM-yyyy");
+
+            String errorMessage = String.format(
+                    "Paciente já possui consulta marcada ou agendada para %s",
+                    startTime.format(formatter)
+            );
+
+            throw new ConflictException(errorMessage);
         }
     }
 

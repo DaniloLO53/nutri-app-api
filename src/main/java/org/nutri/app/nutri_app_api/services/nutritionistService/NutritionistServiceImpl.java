@@ -82,7 +82,7 @@ public class NutritionistServiceImpl implements NutritionistService {
         String nutritionistName = params.getNutritionistName();
         String ibgeApiCity = params.getIbgeApiCity();
         String ibgeApiState = params.getIbgeApiState();
-        Boolean acceptsRemote = params.getAcceptsRemote() != null ? Boolean.parseBoolean(params.getAcceptsRemote()) : null;
+        Boolean acceptsRemote = params.getAcceptsRemote() != null ? params.getAcceptsRemote() : null;
 
         Set<ProfileByParamsProjection> schedules = nutritionistRepository
                 .findNutritionistProfilesByParams(nutritionistName, ibgeApiCity, ibgeApiState, acceptsRemote);
@@ -97,7 +97,7 @@ public class NutritionistServiceImpl implements NutritionistService {
             scheduleSearchParamsDTO.setAddress(schedule.address());
             scheduleSearchParamsDTO.setIbgeApiCity(schedule.ibgeApiCity());
             scheduleSearchParamsDTO.setIbgeApiState(schedule.ibgeApiState());
-            scheduleSearchParamsDTO.setAcceptsRemote(schedule.acceptsRemote().toString());
+            scheduleSearchParamsDTO.setAcceptsRemote(schedule.acceptsRemote());
 
             dtos.add(scheduleSearchParamsDTO);
         });
@@ -116,25 +116,34 @@ public class NutritionistServiceImpl implements NutritionistService {
         return createNutritionistProfileFromFlatProjection(profile, locationDTOS);
     }
 
+    // TODO: refatorar esse código horroroso
     private Set<LocationDTO> getLocationDTOsFromFlatProjections(Set<NutritionistProfileFlatProjection> flatResults) {
-        Set<LocationDTO> locationDTOs = new HashSet<>();
-
-        flatResults.forEach(projection -> {
-            LocationDTO locationDTO = new LocationDTO();
-
-            locationDTO.setAddress(projection.getAddress());
-            locationDTO.setPhone1(projection.getPhone1());
-            locationDTO.setPhone2(projection.getPhone2());
-            locationDTO.setPhone3(projection.getPhone3());
-            locationDTO.setIbgeApiIdentifierState(projection.getIbgeApiStateId());
-            locationDTO.setIbgeApiCity(projection.getIbgeApiCity());
-            locationDTO.setIbgeApiState(projection.getIbgeApiState());
-
-            locationDTOs.add(locationDTO);
-        });
-
-        return locationDTOs;
-    }
+    return flatResults.stream()
+        // 1. FILTRA: Mantém apenas as projeções que têm pelo menos um dado de localização
+        .filter(p ->
+            p.getAddress() != null ||
+            p.getPhone1() != null ||
+            p.getPhone2() != null ||
+            p.getPhone3() != null ||
+            p.getIbgeApiStateId() != null ||
+            p.getIbgeApiCity() != null ||
+            p.getIbgeApiState() != null
+        )
+        // 2. MAPEIA: Transforma as projeções filtradas em LocationDTOs
+        .map(p -> {
+            LocationDTO dto = new LocationDTO();
+            dto.setAddress(p.getAddress());
+            dto.setPhone1(p.getPhone1());
+            dto.setPhone2(p.getPhone2());
+            dto.setPhone3(p.getPhone3());
+            dto.setIbgeApiIdentifierState(p.getIbgeApiStateId());
+            dto.setIbgeApiCity(p.getIbgeApiCity());
+            dto.setIbgeApiState(p.getIbgeApiState());
+            return dto;
+        })
+        // 3. COLETA: Agrupa os DTOs resultantes em um Set
+        .collect(Collectors.toSet());
+}
 
     private NutritionistProfile createNutritionistProfileFromFlatProjection(NutritionistProfileFlatProjection profile, Set<LocationDTO> locationDTOs) {
         String firstName = profile.getFirstName();
