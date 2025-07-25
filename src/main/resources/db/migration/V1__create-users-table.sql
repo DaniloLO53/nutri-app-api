@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS schedules (
 
 CREATE TABLE IF NOT EXISTS appointments_status (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(15) NOT NULL DEFAULT 'AGENDADO',
+    name VARCHAR(15) NOT NULL DEFAULT 'AGENDADO', -- atualizado para VARCHAR(25) na V__5
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -92,6 +92,7 @@ CREATE TABLE IF NOT EXISTS appointments_status (
     CONSTRAINT uk_appointments_status_name UNIQUE (name)
 );
 
+-- deleted at V__6
 INSERT INTO appointments_status(name) VALUES ('AGENDADO'), ('CONFIRMADO'), ('CONCLUÍDO'), ('CANCELADO'), ('NÃO COMPARECEU');
 
 CREATE TABLE IF NOT EXISTS appointments (

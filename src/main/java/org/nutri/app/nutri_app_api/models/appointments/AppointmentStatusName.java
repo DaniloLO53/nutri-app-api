@@ -6,5 +6,6 @@ public enum AppointmentStatusName {
     CONFIRMADO,
     CONCLUIDO,
     CANCELADO,
-    NAO_COMPARECEU
+    NAO_COMPARECEU,
+    ESPERANDO_CONFIRMACAO;
 }

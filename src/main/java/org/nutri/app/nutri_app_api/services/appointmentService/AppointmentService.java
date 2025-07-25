@@ -16,5 +16,7 @@ public interface AppointmentService {
     Set<NutritionistFutureAppointmentDTO> getNutritionistFutureAppointments(UUID userId);
     ResponseToCreateAppointment cancelAppointmentByNutritionist(UUID userId, UUID appointmentId);
     ResponseToCreateAppointment cancelAppointmentByPatient(UUID userId, UUID appointmentId);
+    ResponseToCreateAppointment requestAppointmentConfirmation(UUID userId, UUID appointmentId);
+    ResponseToCreateAppointment confirmAppointment(UUID userId, UUID appointmentId);
     OwnScheduleDTO deleteCanceledAppointment(UUID userId, UUID appointmentId);
 }
