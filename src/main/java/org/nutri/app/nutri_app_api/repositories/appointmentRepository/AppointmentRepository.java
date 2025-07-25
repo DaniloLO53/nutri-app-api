@@ -2,12 +2,15 @@ package org.nutri.app.nutri_app_api.repositories.appointmentRepository;
 
 import org.nutri.app.nutri_app_api.models.appointments.Appointment;
 import org.nutri.app.nutri_app_api.security.models.users.Patient;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -39,10 +42,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
                     "LEFT JOIN users u_nutritionist ON u_nutritionist.id = n.user_id " +
                     "WHERE pt.user_id = :userIdPlaceholder " +
-                    "ORDER BY s.start_time DESC;"
+                    "ORDER BY " +
+                    "    CASE " +
+                    "        WHEN aps.name = 'AGENDADO' THEN 1 " +
+                    "        WHEN aps.name = 'ESPERANDO_CONFIRMACAO' THEN 2 " +
+                    "        WHEN aps.name = 'CONFIRMADO' THEN 3 " +
+                    "        ELSE 4 " +
+                    "    END ASC, " +
+                    "    s.start_time ASC",
+            countQuery = "SELECT COUNT(a.id) " +
+                    "FROM appointments a " +
+                    "LEFT JOIN patients pt ON pt.id = a.patient_id " + // Apenas o join necessário para o WHERE
+                    "WHERE pt.user_id = :userIdPlaceholder"
     )
-    Set<AppointmentPatientProjection> getPatientAppointments(
-            @Param("userIdPlaceholder") UUID userId
+    Page<AppointmentPatientProjection> getPatientAppointments(
+            @Param("userIdPlaceholder") UUID userId,
+            Pageable pageable
     );
 
     @Query(
@@ -58,10 +73,24 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
                     "LEFT JOIN users u_patient ON u_patient.id = pt.user_id " +
                     "WHERE n.user_id = :userId " +
-                    "AND aps.name IN ('AGENDADO', 'CONFIRMADO', 'CANCELADO', 'ESPERANDO_CONFIRMACAO');"
+                    "AND aps.name IN ('AGENDADO', 'CONFIRMADO', 'CANCELADO', 'ESPERANDO_CONFIRMACAO') " +
+                    "ORDER BY " +
+                    "    CASE " +
+                    "        WHEN aps.name = 'AGENDADO' THEN 1 " +
+                    "        WHEN aps.name = 'ESPERANDO_CONFIRMACAO' THEN 2 " +
+                    "        WHEN aps.name = 'CONFIRMADO' THEN 3 " +
+                    "        ELSE 4 " +
+                    "    END ASC, " +
+                    "    s.start_time ASC",
+            countQuery = "SELECT COUNT(a.id) " +
+                    "FROM appointments a " +
+                    "LEFT JOIN patients pt ON pt.id = a.patient_id " +
+                    "LEFT JOIN nutritionists n ON n.id = a.nutritionist_id " + // Join necessário para o WHERE
+                    "WHERE n.user_id = :userId"
     )
-    Set<AppointmentNutritionistProjection> findNutritionistFutureAppointments(
-            @Param("userId") UUID userId
+    Page<AppointmentNutritionistProjection> findNutritionistFutureAppointments(
+            @Param("userId") UUID userId,
+            Pageable pageable
     );
 
     @Query(nativeQuery = true, value = "SELECT EXISTS (SELECT 1 FROM patients p WHERE p.id = :patientId);")
