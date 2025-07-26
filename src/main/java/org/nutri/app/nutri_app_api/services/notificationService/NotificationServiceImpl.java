@@ -2,7 +2,6 @@ package org.nutri.app.nutri_app_api.services.notificationService;
 
 import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
 import org.nutri.app.nutri_app_api.models.appointments.Appointment;
-import org.nutri.app.nutri_app_api.models.locations.Location;
 import org.nutri.app.nutri_app_api.models.notifications.Notification;
 import org.nutri.app.nutri_app_api.payloads.notificationDTOs.NotificationDTO;
 import org.nutri.app.nutri_app_api.payloads.notificationDTOs.NotificationNutritionistDTO;
@@ -11,22 +10,39 @@ import org.nutri.app.nutri_app_api.repositories.appointmentRepository.Appointmen
 import org.nutri.app.nutri_app_api.repositories.notificationRepository.NotificationRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 import org.nutri.app.nutri_app_api.security.models.users.Patient;
+import org.nutri.app.nutri_app_api.security.models.users.User;
+import org.nutri.app.nutri_app_api.security.repositories.AuthRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
     private final AppointmentRepository appointmentRepository;
     private final NotificationRepository notificationRepository;
+    private final AuthRepository authRepository;
 
-    public NotificationServiceImpl(SimpMessagingTemplate messagingTemplate, AppointmentRepository appointmentRepository, NotificationRepository notificationRepository) {
+    public NotificationServiceImpl(SimpMessagingTemplate messagingTemplate, AppointmentRepository appointmentRepository, NotificationRepository notificationRepository, AuthRepository authRepository) {
         this.messagingTemplate = messagingTemplate;
         this.appointmentRepository = appointmentRepository;
         this.notificationRepository = notificationRepository;
+        this.authRepository = authRepository;
+    }
+
+    @Override
+    public List<NotificationDTO> getNotificationsForUser(UUID userId) {
+        User recipient = authRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId.toString()));
+
+        List<Notification> notifications = notificationRepository.findByRecipientOrderByCreatedAtDesc(recipient);
+
+        return notifications.stream()
+                .map(notification -> buildNotificationDTO(notification)) // Mapeia cada notificação usando o método helper
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -40,7 +56,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         // 1. Persistir a notificação no banco de dados
         Notification notificationEntity = new Notification();
-        notificationEntity.setRecipient(patient.getUser()); // O destinatário é o usuário do paciente
+        notificationEntity.setRecipient(patient.getUser());
+        notificationEntity.setSender(nutritionist.getUser()); // <--- SALVANDO O REMETENTE
         notificationEntity.setMessage("O nutricionista " + nutritionist.getUser().getFirstName() + " agendou uma nova consulta para você.");
         notificationEntity.setRelatedEntityId(appointment.getId());
         // 'isRead' e 'createdAt' terão valores padrão
@@ -78,5 +95,35 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setCreatedAt(notificationEntity.getCreatedAt());
 
         return notificationDTO;
+    }
+
+    private NotificationDTO buildNotificationDTO(Notification notification) {
+        NotificationNutritionistDTO fromDTO = null;
+        if (notification.getSender() != null) {
+            User sender = notification.getSender();
+            fromDTO = new NotificationNutritionistDTO(
+                    sender.getId(), // Este é o ID do User, não do Patient/Nutritionist
+                    sender.getEmail(),
+                    sender.getFirstName() + " " + sender.getLastName()
+            );
+        }
+
+        // Constrói o DTO do destinatário
+        User recipient = notification.getRecipient();
+        NotificationPatientDTO toDTO = new NotificationPatientDTO(
+                recipient.getId(),
+                recipient.getEmail(),
+                recipient.getFirstName() + " " + recipient.getLastName()
+        );
+
+        return new NotificationDTO(
+                notification.getId(),
+                fromDTO,
+                toDTO,
+                notification.getMessage(),
+                notification.isRead(),
+                notification.getRelatedEntityId(),
+                notification.getCreatedAt()
+        );
     }
 }

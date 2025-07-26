@@ -5,6 +5,7 @@ CREATE TABLE notifications (
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     -- ID opcional para relacionar a notificação a outra entidade (ex: uma consulta)
     related_entity_id UUID,
+    -- agora possui um sender_id
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

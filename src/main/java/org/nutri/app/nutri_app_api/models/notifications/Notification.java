@@ -30,6 +30,10 @@ public class Notification {
     @JoinColumn(name = "recipient_id", nullable = false)
     private User recipient; // O usuário que recebe a notificação
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id") // Pode ser nulo para notificações geradas pelo sistema
+    private User sender;
+
     @Column(nullable = false)
     private String message; // A mensagem da notificação
 
