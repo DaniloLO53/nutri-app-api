@@ -9,6 +9,7 @@ import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatusName;
 import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.*;
 import org.nutri.app.nutri_app_api.payloads.locationDTOs.OwnLocationResponse;
+import org.nutri.app.nutri_app_api.payloads.notificationDTOs.NotificationDTO;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.AppointmentOrSchedule;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
@@ -23,6 +24,7 @@ import org.nutri.app.nutri_app_api.security.models.users.Patient;
 import org.nutri.app.nutri_app_api.security.models.users.RoleName;
 import org.nutri.app.nutri_app_api.security.models.users.User;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
+import org.nutri.app.nutri_app_api.services.notificationService.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -45,16 +47,19 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentStatusRepository appointmentStatusRepository;
     private final PatientRepository patientRepository;
     private final ScheduleRepository scheduleRepository;
+    private final NotificationService notificationService;
 
     public AppointmentServiceImpl(
             AppointmentRepository appointmentRepository,
             AppointmentStatusRepository appointmentStatusRepository,
             PatientRepository patientRepository,
-            ScheduleRepository scheduleRepository) {
+            ScheduleRepository scheduleRepository,
+            NotificationService notificationService) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentStatusRepository = appointmentStatusRepository;
         this.patientRepository = patientRepository;
         this.scheduleRepository = scheduleRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -173,6 +178,11 @@ public class AppointmentServiceImpl implements AppointmentService {
         newAppointment.setIsRemote(createAppointmentDTO.getIsRemote());
 
         Appointment savedAppointment = appointmentRepository.save(newAppointment);
+
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        if (role.equals(RoleName.ROLE_NUTRITIONIST.name())) {
+            notificationService.notifyPatientOfAppointment(savedAppointment.getId());
+        }
 
         return toResponseDTO(savedAppointment);
     }
