@@ -1,5 +1,6 @@
 package org.nutri.app.nutri_app_api.services.notificationService;
 
+import org.nutri.app.nutri_app_api.exceptions.ForbiddenException;
 import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
 import org.nutri.app.nutri_app_api.models.appointments.Appointment;
 import org.nutri.app.nutri_app_api.models.notifications.Notification;
@@ -14,7 +15,9 @@ import org.nutri.app.nutri_app_api.security.models.users.User;
 import org.nutri.app.nutri_app_api.security.repositories.AuthRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,6 +34,27 @@ public class NotificationServiceImpl implements NotificationService {
         this.appointmentRepository = appointmentRepository;
         this.notificationRepository = notificationRepository;
         this.authRepository = authRepository;
+    }
+
+    @Override
+    @Transactional
+    public void markAsRead(UUID userId, UUID notificationId) {
+        // 1. Busca a notificação no banco de dados pelo seu ID.
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification", "id", notificationId.toString()));
+
+        // 2. Verificação de Segurança (CRÍTICO): Confirma se o ID do usuário logado
+        //    é o mesmo do ID do destinatário da notificação.
+        if (!notification.getRecipient().getId().equals(userId)) {
+            throw new ForbiddenException("Acesso negado. Você não tem permissão para modificar esta notificação.");
+        }
+
+        // 3. Altera o status para 'lida' e salva no banco.
+        //    (Opcional: verificar se já está lida para evitar uma escrita desnecessária no banco)
+        if (!notification.isRead()) {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+        }
     }
 
     @Override

@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface NotificationService {
     void notifyPatientOfAppointment(UUID appointmentId);
     List<NotificationDTO> getNotificationsForUser(UUID userId);
+    void markAsRead(UUID userId, UUID notificationId);
 }
