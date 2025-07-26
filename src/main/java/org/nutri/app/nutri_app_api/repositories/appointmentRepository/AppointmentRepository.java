@@ -41,7 +41,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "LEFT JOIN locations l ON l.id = s.location_id " +
                     "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " +
                     "LEFT JOIN users u_nutritionist ON u_nutritionist.id = n.user_id " +
-                    "WHERE pt.user_id = :userIdPlaceholder " +
+                    "WHERE pt.user_id = :userId " +
                     "ORDER BY " +
                     "    CASE " +
                     "        WHEN aps.name = 'AGENDADO' THEN 1 " +
@@ -52,11 +52,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "    s.start_time ASC",
             countQuery = "SELECT COUNT(a.id) " +
                     "FROM appointments a " +
-                    "LEFT JOIN patients pt ON pt.id = a.patient_id " + // Apenas o join necessário para o WHERE
-                    "WHERE pt.user_id = :userIdPlaceholder"
+                    "LEFT JOIN schedules s ON s.id = a.schedule_id " +
+                    "LEFT JOIN patients pt ON pt.id = a.patient_id " +
+                    "LEFT JOIN locations l ON l.id = s.location_id " +
+                    "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " + // Join necessário para o WHERE
+                    "WHERE pt.user_id = :userId"
     )
     Page<AppointmentPatientProjection> getPatientAppointments(
-            @Param("userIdPlaceholder") UUID userId,
+            @Param("userId") UUID userId,
             Pageable pageable
     );
 
@@ -84,8 +87,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "    s.start_time ASC",
             countQuery = "SELECT COUNT(a.id) " +
                     "FROM appointments a " +
+                    "LEFT JOIN schedules s ON s.id = a.schedule_id " +
                     "LEFT JOIN patients pt ON pt.id = a.patient_id " +
-                    "LEFT JOIN nutritionists n ON n.id = a.nutritionist_id " + // Join necessário para o WHERE
+                    "LEFT JOIN locations l ON l.id = s.location_id " +
+                    "LEFT JOIN nutritionists n ON n.id = l.nutritionist_id " + // Join necessário para o WHERE
                     "WHERE n.user_id = :userId"
     )
     Page<AppointmentNutritionistProjection> findNutritionistFutureAppointments(
