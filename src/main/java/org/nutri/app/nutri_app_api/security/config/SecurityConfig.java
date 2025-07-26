@@ -61,6 +61,9 @@ public class SecurityConfig {
                     "/webjars/**"
             ).permitAll();
 
+            // WebSockets
+            auth.requestMatchers("/ws/**").permitAll();
+
             // Public endpoints
             auth.requestMatchers("/api/public/**").permitAll();
             auth.requestMatchers("/error").permitAll();
