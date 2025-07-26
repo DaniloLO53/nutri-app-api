@@ -21,5 +21,6 @@ public interface AppointmentService {
     ResponseToCreateAppointment cancelAppointmentByPatient(UUID userId, UUID appointmentId);
     ResponseToCreateAppointment requestAppointmentConfirmation(UUID userId, UUID appointmentId);
     ResponseToCreateAppointment confirmAppointment(UUID userId, UUID appointmentId);
+    ResponseToCreateAppointment finishAppointment(UUID userId, UUID appointmentId, Boolean attended);
     OwnScheduleDTO deleteCanceledAppointment(UUID userId, UUID appointmentId);
 }

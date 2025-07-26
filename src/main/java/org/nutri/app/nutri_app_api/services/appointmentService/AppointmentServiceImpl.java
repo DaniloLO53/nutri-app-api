@@ -156,6 +156,26 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
+    public ResponseToCreateAppointment finishAppointment(UUID userId, UUID appointmentId, Boolean attended) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta", "id", appointmentId.toString()));
+
+        authorizeAppointmentAction(userId, appointment);
+
+        AppointmentStatusName status = attended ? AppointmentStatusName.CONCLUIDO : AppointmentStatusName.NAO_COMPARECEU;
+
+        AppointmentStatus waitingConfirmationStatus = appointmentStatusRepository.findFirstByName(status.toString())
+                .orElseThrow(() -> new ResourceNotFoundException("Status", "nome", status.toString()));
+
+        appointment.setAppointmentStatus(waitingConfirmationStatus);
+
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+
+        return toResponseDTO(updatedAppointment);
+    }
+
+    @Override
+    @Transactional
     public ResponseToCreateAppointment createAppointment(UserDetailsImpl userDetails, CreateAppointmentDTO createAppointmentDTO) {
         UUID patientId = createAppointmentDTO.getPatientId();
 
