@@ -20,6 +20,7 @@ public class ResponseSignIn {
     private String firstName;
     private String lastName;
     private String role;
+    private String token;
     private String cpf;
     private LocalDate birthday;
     private String crf;

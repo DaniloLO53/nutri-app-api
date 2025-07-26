@@ -28,8 +28,8 @@ public class AuthController {
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('ROLE_NUTRITIONIST', 'ROLE_PATIENT')")
-    public ResponseEntity<UserInfoProjection> getCurrentUserInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        UserInfoProjection currentUserInfo = authService.getCurrentUserInfoByUserDetails(userDetails);
+    public ResponseEntity<ResponseSignIn> getCurrentUserInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        ResponseSignIn currentUserInfo = authService.getCurrentUserInfoByUserDetails(userDetails);
         return ResponseEntity.status(HttpStatus.OK).body(currentUserInfo);
     }
 
@@ -50,6 +50,7 @@ public class AuthController {
         responseSignIn.setFirstName(response.getFirstName());
         responseSignIn.setLastName(response.getLastName());
         responseSignIn.setId(response.getId());
+        responseSignIn.setToken(response.getToken());
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -66,6 +67,7 @@ public class AuthController {
         responseSignIn.setRole(response.getRole());
         responseSignIn.setFirstName(response.getFirstName());
         responseSignIn.setLastName(response.getLastName());
+        responseSignIn.setToken(response.getToken());
 
         return ResponseEntity
                 .status(HttpStatus.OK)

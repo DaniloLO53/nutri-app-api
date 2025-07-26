@@ -130,6 +130,28 @@ public class JwtUtils {
         return cookie == null ? null : cookie.getValue();
     }
 
+    public String getJwtFromCookieString(String cookieHeader) {
+        if (cookieHeader == null || cookieHeader.isEmpty()) {
+            return null;
+        }
+
+        // 1. Divide a string do cabeçalho em partes baseadas no ';'
+        String[] cookies = cookieHeader.split(";");
+        String prefix = jwtCookieName + "=";
+
+        // 2. Itera por cada parte para encontrar o cookie correto
+        for (String cookie : cookies) {
+            String trimmedCookie = cookie.trim(); // Remove espaços em branco
+            if (trimmedCookie.startsWith(prefix)) {
+                // 3. Retorna o valor, que é a substring após "nomeDoCookie="
+                return trimmedCookie.substring(prefix.length());
+            }
+        }
+
+        // Retorna null se o cookie com o nome especificado não for encontrado
+        return null;
+    }
+
     public ResponseCookie getCleanJwtCookie() {
         return ResponseCookie.from(jwtCookieName, null)
                 .path("/api")
