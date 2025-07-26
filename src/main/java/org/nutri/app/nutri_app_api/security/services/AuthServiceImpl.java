@@ -104,6 +104,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         ResponseCookie jwtCookie = jwtUtils.generateJwtCookieFromUserDetails(userDetails);
+        String token = jwtUtils.getJwtFromCookieString(jwtCookie.toString());
 
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
         String firstName = userDetails.getFirstName();
@@ -118,13 +119,33 @@ public class AuthServiceImpl implements AuthService {
         responseSignIn.setFirstName(firstName);
         responseSignIn.setLastName(lastName);
         responseSignIn.setRole(role);
+        responseSignIn.setToken(token);
 
         return responseSignIn;
     }
 
     @Override
-    public UserInfoProjection getCurrentUserInfoByUserDetails(UserDetailsImpl userDetails) {
-        return authRepository.findUserInfosById(userDetails.getId());
+    public ResponseSignIn getCurrentUserInfoByUserDetails(UserDetailsImpl userDetails) {
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookieFromUserDetails(userDetails);
+        String token = jwtUtils.getJwtFromCookieString(jwtCookie.toString());
+
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        String firstName = userDetails.getFirstName();
+        String lastName = userDetails.getLastName();
+        String email = userDetails.getUsername();
+        UUID userId = userDetails.getId();
+
+        ResponseSignIn responseSignIn = new ResponseSignIn();
+
+        responseSignIn.setJwtCookie(jwtCookie);
+        responseSignIn.setId(userId.toString());
+        responseSignIn.setEmail(email);
+        responseSignIn.setFirstName(firstName);
+        responseSignIn.setLastName(lastName);
+        responseSignIn.setRole(role);
+        responseSignIn.setToken(token);
+
+        return responseSignIn;
     }
 
     @Override

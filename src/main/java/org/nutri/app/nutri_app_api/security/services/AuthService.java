@@ -12,6 +12,6 @@ public interface AuthService {
     void signUpPatient(RequestSignUpPatient signUpDTO);
     void signUpNutritionist(RequestSignUpNutritionist signUpDTO);
     ResponseSignIn signInUser(RequestSignIn requestSignIn, RoleName roleName);
-    UserInfoProjection getCurrentUserInfoByUserDetails(UserDetailsImpl userDetails);
+    ResponseSignIn getCurrentUserInfoByUserDetails(UserDetailsImpl userDetails);
     ResponseCookie getCleanJwtCookie();
 }
