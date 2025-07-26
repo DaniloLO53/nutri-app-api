@@ -108,7 +108,7 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }
 
-    @PostMapping("/appointments/{appointmentId}/request-confirmation")
+    @PatchMapping("/appointments/{appointmentId}/request-confirmation")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
     public ResponseEntity<ResponseToCreateAppointment> requestAppointmentConfirmation(Authentication authentication, @PathVariable UUID appointmentId) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
@@ -119,7 +119,7 @@ public class AppointmentController {
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }
 
-    @PostMapping("/appointments/{appointmentId}/confirm")
+    @PatchMapping("/appointments/{appointmentId}/confirm")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
     public ResponseEntity<ResponseToCreateAppointment> confirmAppointment(Authentication authentication, @PathVariable UUID appointmentId) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
