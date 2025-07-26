@@ -23,11 +23,15 @@ import org.nutri.app.nutri_app_api.security.models.users.Patient;
 import org.nutri.app.nutri_app_api.security.models.users.RoleName;
 import org.nutri.app.nutri_app_api.security.models.users.User;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -174,10 +178,10 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public Set<PatientAppointmentResponse> getPatientAppointments(UUID userId) {
-        Set<AppointmentPatientProjection> projections = appointmentRepository.getPatientAppointments(userId);
+    public Page<PatientAppointmentResponse> getPatientAppointments(UUID userId, Pageable pageable) {
+        Page<AppointmentPatientProjection> projectionPage = appointmentRepository.getPatientAppointments(userId, pageable);
 
-        return projections.stream().map(projection -> {
+        List<PatientAppointmentResponse> dtos = projectionPage.stream().map(projection -> {
             PatientAppointmentResponse patientAppointmentResponse = new PatientAppointmentResponse();
 
             patientAppointmentResponse.setId(projection.getId().toString());
@@ -201,33 +205,39 @@ public class AppointmentServiceImpl implements AppointmentService {
             patientAppointmentResponse.setNutritionist(patientAppointmentResponseNutritionistDTO);
 
             return patientAppointmentResponse;
-        }).collect(Collectors.toSet());
+        }).collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, projectionPage.getTotalElements());
     }
 
     @Override
-    public Set<NutritionistFutureAppointmentDTO> getNutritionistFutureAppointments(UUID userId) {
-        Set<AppointmentNutritionistProjection> projections = appointmentRepository.findNutritionistFutureAppointments(userId);
+    public Page<NutritionistFutureAppointmentDTO> getNutritionistFutureAppointments(UUID userId, Pageable pageable) {
+        // ✅ 1. O repositório agora retorna um Page<Projection>
+        Page<AppointmentNutritionistProjection> projectionPage = appointmentRepository.findNutritionistFutureAppointments(userId, pageable);
 
-        return projections.stream().map(projection -> {
-            NutritionistFutureAppointmentDTO nutritionistFutureAppointmentDTO = new NutritionistFutureAppointmentDTO();
+        // ✅ 2. Mapeia o CONTEÚDO da página de projeções para a lista de DTOs
+        List<NutritionistFutureAppointmentDTO> dtos = projectionPage.getContent().stream().map(projection -> {
+            NutritionistFutureAppointmentDTO dto = new NutritionistFutureAppointmentDTO();
+            // ... (sua lógica de mapeamento permanece a mesma) ...
+            dto.setId(projection.getId().toString());
+            dto.setIsRemote(projection.getIsRemote());
+            dto.setAddress(projection.getAddress());
+            dto.setStartTime(projection.getStartTime());
+            dto.setDurationMinutes(projection.getDurationMinutes());
+            dto.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
+            dto.setType(EventType.APPOINTMENT);
 
-            nutritionistFutureAppointmentDTO.setId(projection.getId().toString());
-            nutritionistFutureAppointmentDTO.setIsRemote(projection.getIsRemote());
-            nutritionistFutureAppointmentDTO.setAddress(projection.getAddress());
-            nutritionistFutureAppointmentDTO.setStartTime(projection.getStartTime());
-            nutritionistFutureAppointmentDTO.setDurationMinutes(projection.getDurationMinutes());
-            nutritionistFutureAppointmentDTO.setStatus(AppointmentStatusName.valueOf(projection.getStatus()));
-            nutritionistFutureAppointmentDTO.setType(EventType.APPOINTMENT);
+            NutritionistAppointmentResponsePatientDTO patientDTO = new NutritionistAppointmentResponsePatientDTO();
+            patientDTO.setId(projection.getPatientId());
+            patientDTO.setName(projection.getPatientName());
+            patientDTO.setEmail(projection.getPatientEmail());
+            dto.setPatient(patientDTO);
 
-            NutritionistAppointmentResponsePatientDTO nutritionistAppointmentResponsePatientDTO = new NutritionistAppointmentResponsePatientDTO();
-            nutritionistAppointmentResponsePatientDTO.setId(projection.getPatientId());
-            nutritionistAppointmentResponsePatientDTO.setName(projection.getPatientName());
-            nutritionistAppointmentResponsePatientDTO.setEmail(projection.getPatientEmail());
+            return dto;
+        }).collect(Collectors.toList());
 
-            nutritionistFutureAppointmentDTO.setPatient(nutritionistAppointmentResponsePatientDTO);
-
-            return nutritionistFutureAppointmentDTO;
-        }).collect(Collectors.toSet());
+        // ✅ 3. Cria e retorna uma nova Page com os DTOs mapeados e os metadados da página original
+        return new PageImpl<>(dtos, pageable, projectionPage.getTotalElements());
     }
 
     private OwnScheduleDTO createOwnScheduleDTO(Schedule savedSchedule) {

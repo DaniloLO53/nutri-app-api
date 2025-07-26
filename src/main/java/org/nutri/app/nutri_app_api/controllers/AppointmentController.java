@@ -8,13 +8,17 @@ import org.nutri.app.nutri_app_api.payloads.appointmentDTOs.ResponseToCreateAppo
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.appointmentService.AppointmentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -43,24 +47,29 @@ public class AppointmentController {
 
     @GetMapping("/patients/me/appointments")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
-    public ResponseEntity<Set<PatientAppointmentResponse>> getPatientAppointments(Authentication authentication) {
+    public ResponseEntity<Page<PatientAppointmentResponse>> getPatientAppointments(
+            Authentication authentication,
+            @PageableDefault(size = 15, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable
+    ) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        Set<PatientAppointmentResponse> appointments = appointmentService.getPatientAppointments(userId);
+        Page<PatientAppointmentResponse> appointments = appointmentService.getPatientAppointments(userId, pageable);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
+        return ResponseEntity.status(HttpStatus.OK).body(appointments);
     }
 
     @GetMapping("/nutritionists/me/appointments")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<Set<NutritionistFutureAppointmentDTO>> getNutritionistFutureAppointments(Authentication authentication) {
+    public ResponseEntity<Page<NutritionistFutureAppointmentDTO>> getNutritionistFutureAppointments(
+            Authentication authentication,
+            @PageableDefault(size = 15, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-        Set<NutritionistFutureAppointmentDTO> appointments = appointmentService.getNutritionistFutureAppointments(userId);
+        Page<NutritionistFutureAppointmentDTO> appointments = appointmentService.getNutritionistFutureAppointments(userId, pageable);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(appointments);
+        return ResponseEntity.status(HttpStatus.OK).body(appointments);
     }
 
     @DeleteMapping("/nutritionists/me/appointments/{appointmentId}")
