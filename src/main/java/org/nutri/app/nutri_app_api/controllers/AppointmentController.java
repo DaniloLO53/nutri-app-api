@@ -129,4 +129,18 @@ public class AppointmentController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
     }
+
+    @PatchMapping("/appointments/{appointmentId}/finish")
+    @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
+    public ResponseEntity<ResponseToCreateAppointment> finishAppointment(
+            Authentication authentication,
+            @PathVariable UUID appointmentId,
+            @RequestParam(name = "attended", defaultValue = "false") Boolean attended) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UUID userId = userDetails.getId();
+
+        ResponseToCreateAppointment responseToCreateAppointment = appointmentService.finishAppointment(userId, appointmentId, attended);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(responseToCreateAppointment);
+    }
 }
