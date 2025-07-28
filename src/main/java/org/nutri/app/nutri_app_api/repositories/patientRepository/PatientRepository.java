@@ -54,4 +54,54 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
             @Param("nutritionistId") UUID nutritionistId,
             Pageable pageable
     );
+
+    @Query(
+            value = "SELECT DISTINCT " +
+                    "  p.id AS id, " +
+                    "  CONCAT(u.first_name, ' ', u.last_name) AS name " +
+                    "FROM " +
+                    "  appointments a " +
+                    "JOIN " +
+                    "  appointments_status aps ON a.appointments_status_id = aps.id " +
+                    "JOIN " +
+                    "  schedules s ON a.schedule_id = s.id " +
+                    "JOIN " +
+                    "  locations l ON s.location_id = l.id " +
+                    "JOIN " +
+                    "  nutritionists n ON l.nutritionist_id = n.id " +
+                    "JOIN " +
+                    "  patients p ON a.patient_id = p.id " +
+                    "JOIN " +
+                    "  users u ON p.user_id = u.id " +
+                    "WHERE " +
+                    "  n.user_id = :userId " +
+                    "  AND aps.name IN ('AGENDADO', 'CONFIRMADO', 'CONCLUIDO', 'ESPERANDO_CONFIRMACAO') " +
+                    "  AND (CONCAT(u.first_name, ' ', u.last_name) ILIKE CONCAT('%', :name, '%'))",
+            countQuery = "SELECT COUNT(DISTINCT p.id) " +
+                    "FROM " +
+                    "  appointments a " +
+                    "JOIN " +
+                    "  appointments_status aps ON a.appointments_status_id = aps.id " +
+                    "JOIN " +
+                    "  schedules s ON a.schedule_id = s.id " +
+                    "JOIN " +
+                    "  locations l ON s.location_id = l.id " +
+                    "JOIN " +
+                    "  nutritionists n ON l.nutritionist_id = n.id " +
+                    "JOIN " +
+                    "  patients p ON a.patient_id = p.id " +
+                    "JOIN " +
+                    "  users u ON p.user_id = u.id " +
+                    "WHERE " +
+                    "  n.user_id = :userId " +
+                    "  AND aps.name IN ('AGENDADO', 'CONFIRMADO', 'CONCLUIDO', 'ESPERANDO_CONFIRMACAO') " +
+                    "  AND (CONCAT(u.first_name, ' ', u.last_name) ILIKE CONCAT('%', :name, '%'))",
+            nativeQuery = true
+    )
+    Page<NutritionistPatientSearchProjection> findNutritionistScheduledPatientsByName(
+            @Param("userId") UUID userId,
+            @Param("name") String name,
+            Pageable pageable
+    );
+
 }
