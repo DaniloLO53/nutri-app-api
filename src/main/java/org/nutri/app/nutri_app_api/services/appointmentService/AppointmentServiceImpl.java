@@ -248,7 +248,6 @@ public class AppointmentServiceImpl implements AppointmentService {
         // ✅ 2. Mapeia o CONTEÚDO da página de projeções para a lista de DTOs
         List<NutritionistFutureAppointmentDTO> dtos = projectionPage.getContent().stream().map(projection -> {
             NutritionistFutureAppointmentDTO dto = new NutritionistFutureAppointmentDTO();
-            // ... (sua lógica de mapeamento permanece a mesma) ...
             dto.setId(projection.getId().toString());
             dto.setIsRemote(projection.getIsRemote());
             dto.setAddress(projection.getAddress());

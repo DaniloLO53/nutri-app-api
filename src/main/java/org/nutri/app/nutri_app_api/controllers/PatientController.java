@@ -1,5 +1,6 @@
 package org.nutri.app.nutri_app_api.controllers;
 
+import org.nutri.app.nutri_app_api.payloads.patientDTOs.NutritionistPatientSearchDTO;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.patientService.PatientService;
@@ -39,14 +40,14 @@ public class PatientController {
 
     @GetMapping("/nutritionists/me/patients")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<Page<?>> getNutritionistPatients(
+    public ResponseEntity<Page<NutritionistPatientSearchDTO>> getNutritionistPatients(
             Authentication authentication,
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
-//        Page<NutritionistFutureAppointmentDTO> appointments = appointmentService.getNutritionistFutureAppointments(userId, pageable);
+        Page<NutritionistPatientSearchDTO> patients = patientService.getNutritionistPatients(userId, pageable);
 
-        return ResponseEntity.status(HttpStatus.OK).body(null);
+        return ResponseEntity.status(HttpStatus.OK).body(patients);
     }
 }
