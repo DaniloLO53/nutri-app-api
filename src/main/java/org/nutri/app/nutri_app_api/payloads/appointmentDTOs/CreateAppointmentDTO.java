@@ -1,6 +1,5 @@
 package org.nutri.app.nutri_app_api.payloads.appointmentDTOs;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;

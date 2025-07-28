@@ -9,6 +9,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.nutri.app.nutri_app_api.models.appointments.Appointment;
+import org.nutri.app.nutri_app_api.models.patientNutritionistRelationship.PatientNutritionistRelationship;
 
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -65,4 +66,7 @@ public class Patient {
     // In this application, if we do patient.getAppointments().remove(app_01) and patientsRep.save(patient), app_01 is now orphan and will be removed (we want that)
     @OneToMany(mappedBy = "patient", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE }, orphanRemoval = true)
     private Set<Appointment> appointments = new HashSet<>();
+
+    @OneToMany(mappedBy = "patient", cascade = { CascadeType.ALL }, orphanRemoval = true)
+    private Set<PatientNutritionistRelationship> relationships;
 }

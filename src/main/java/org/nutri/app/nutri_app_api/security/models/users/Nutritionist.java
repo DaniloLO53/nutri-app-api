@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.nutri.app.nutri_app_api.models.locations.Location;
+import org.nutri.app.nutri_app_api.models.patientNutritionistRelationship.PatientNutritionistRelationship;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileByParamsProjection;
 
 import java.util.Set;
@@ -74,4 +75,7 @@ public class Nutritionist {
 
     @OneToMany(mappedBy = "nutritionist", cascade = { CascadeType.ALL }, orphanRemoval = true)
     private Set<Location> locations;
+
+    @OneToMany(mappedBy = "nutritionist", cascade = { CascadeType.ALL }, orphanRemoval = true)
+    private Set<PatientNutritionistRelationship> relationships;
 }
