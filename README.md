@@ -77,7 +77,9 @@ Para configurar o ambiente de desenvolvimento local, siga os passos abaixo:
 
 ### 🎨 Visualização
 
-
+|                     Design do Banco de Dados Atual                     |
+|:----------------------------------------------------------------------:|
+|      <img src="src/main/resources/static/NUTRI_APP_DIAGRAM.png">       |
 
 ---
 
