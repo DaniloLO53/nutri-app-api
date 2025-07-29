@@ -15,7 +15,7 @@ public interface ClinicalInformationRepository extends JpaRepository<ClinicalInf
                     "JOIN patient_nutritionist_relationships pnr ON ci.patient_id = pnr.patient_id " +
                     "JOIN nutritionists n ON pnr.nutritionist_id = n.id " +
                     "WHERE ci.patient_id = :patientId AND n.user_id = :nutritionistUserId " +
-                    "ORDER BY ci.assessment_date DESC " +
+                    "ORDER BY ci.created_at DESC " +
                     "LIMIT 1",
             nativeQuery = true
     )

@@ -11,7 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MasterMedicationDTO {
-    private UUID id;
+    private UUID medicationId;
     private String name;
     private MedicationType type;
 }

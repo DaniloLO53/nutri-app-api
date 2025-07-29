@@ -11,6 +11,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MasterDiseaseDTO {
-    private UUID symptomId;
+    private UUID diseaseId;
     private String name;
 }
