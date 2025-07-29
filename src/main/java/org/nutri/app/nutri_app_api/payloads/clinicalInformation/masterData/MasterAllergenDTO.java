@@ -11,7 +11,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MasterAllergenDTO {
-    private UUID symptomId;
+    private UUID allergenId;
     private String name;
     private AllergenType type;
 }

@@ -8,10 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -24,9 +21,20 @@ public class ClinicalInformationController {
         this.clinicalInformationService = clinicalInformationService;
     }
 
+    @PostMapping("/patients/{patientId}/clinical-information")
+    @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
+    public ResponseEntity<ClinicalInformationDTO> createClinicalInformation(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable UUID patientId,
+            @RequestBody ClinicalInformationDTO clinicalInformation) {
+        clinicalInformationService.createClinicalInformation(userDetails.getId(), patientId, clinicalInformation);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(null);
+    }
+
     @GetMapping("/patients/{patientId}/clinical-information")
     @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
-    public ResponseEntity<?> getClinicalInformation(
+    public ResponseEntity<ClinicalInformationDTO> getClinicalInformation(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable UUID patientId) {
         ClinicalInformationDTO clinicalInformation = clinicalInformationService.getClinicalInformation(userDetails.getId(), patientId);

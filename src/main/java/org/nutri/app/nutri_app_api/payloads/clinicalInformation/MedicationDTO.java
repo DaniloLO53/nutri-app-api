@@ -15,5 +15,5 @@ public class MedicationDTO {
     private String name;
     private String dosage;
     private String notes;
-    private MedicationType type;
+//    private MedicationType type;
 }

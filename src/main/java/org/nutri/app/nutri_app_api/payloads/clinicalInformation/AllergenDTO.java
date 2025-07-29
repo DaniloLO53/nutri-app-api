@@ -14,5 +14,5 @@ public class AllergenDTO {
     private UUID allergenId;
     private String name;
     private String reactionDetails;
-    private AllergenType type;
+//    private AllergenType type;
 }

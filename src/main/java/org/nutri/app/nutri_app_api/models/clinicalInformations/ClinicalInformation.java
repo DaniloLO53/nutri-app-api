@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.nutri.app.nutri_app_api.models.clinicalInformations.allergens.Allergen;
 import org.nutri.app.nutri_app_api.models.clinicalInformations.allergens.InformationAllergen;
 import org.nutri.app.nutri_app_api.models.clinicalInformations.diseases.InformationDiagnosedDisease;
 import org.nutri.app.nutri_app_api.models.clinicalInformations.diseases.InformationFamilyDisease;
@@ -145,4 +146,64 @@ public class ClinicalInformation {
 
     @OneToMany(mappedBy = "clinicalInformation", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<InformationFood> foodPreferencesAndAversions = new HashSet<>();
+
+    public void addDiagnosedDisease(InformationDiagnosedDisease diagnosedDisease) {
+        diagnosedDiseases.add(diagnosedDisease);
+        diagnosedDisease.setClinicalInformation(this); // Sincroniza o lado filho
+    }
+
+    public void removeDiagnosedDisease(InformationDiagnosedDisease diagnosedDisease) {
+        diagnosedDiseases.remove(diagnosedDisease);
+        diagnosedDisease.setClinicalInformation(null);
+    }
+
+    public void addFamilyDisease(InformationFamilyDisease familyDisease) {
+        familyDiseases.add(familyDisease);
+        familyDisease.setClinicalInformation(this); // Sincroniza o lado filho
+    }
+
+    public void removeFamilyDisease(InformationFamilyDisease familyDisease) {
+        familyDiseases.remove(familyDisease);
+        familyDisease.setClinicalInformation(null);
+    }
+
+    public void addSymptom(InformationSymptom symptom) {
+        symptoms.add(symptom);
+        symptom.setClinicalInformation(this); // Sincroniza o lado filho
+    }
+
+    public void removeSymptom(InformationSymptom symptom) {
+        symptoms.remove(symptom);
+        symptom.setClinicalInformation(null);
+    }
+
+    public void addMedication(InformationMedication medication) {
+        medications.add(medication);
+        medication.setClinicalInformation(this); // Sincroniza o lado filho
+    }
+
+    public void removeMedication(InformationMedication medication) {
+        medications.remove(medication);
+        medication.setClinicalInformation(null);
+    }
+
+    public void addAllergen(InformationAllergen allergen) {
+        allergens.add(allergen);
+        allergen.setClinicalInformation(this); // Sincroniza o lado filho
+    }
+
+    public void removeAllergen(InformationAllergen allergen) {
+        allergens.remove(allergen);
+        allergen.setClinicalInformation(null);
+    }
+
+    public void addFoodPreferencesAndAversions(InformationFood food) {
+        foodPreferencesAndAversions.add(food);
+        food.setClinicalInformation(this); // Sincroniza o lado filho
+    }
+
+    public void removeFoodPreferencesAndAversions(InformationFood food) {
+        foodPreferencesAndAversions.remove(food);
+        food.setClinicalInformation(null);
+    }
 }

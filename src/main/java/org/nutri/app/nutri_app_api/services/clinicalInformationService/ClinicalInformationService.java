@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface ClinicalInformationService {
     ClinicalInformationDTO getClinicalInformation(UUID userId, UUID patientId);
     ClinicalInformationMasterDataDTO getClinicalInformationMasterData();
+    void createClinicalInformation(UUID id, UUID patientId, ClinicalInformationDTO clinicalInformation);
 }

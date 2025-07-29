@@ -10,6 +10,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MasterFoodDTO {
-    private UUID id;
+    private UUID foodId;
     private String name;
 }
