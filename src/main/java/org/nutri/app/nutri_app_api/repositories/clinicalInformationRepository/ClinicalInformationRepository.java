@@ -1,10 +1,12 @@
 package org.nutri.app.nutri_app_api.repositories.clinicalInformationRepository;
 
 import org.nutri.app.nutri_app_api.models.clinicalInformations.ClinicalInformation;
+import org.nutri.app.nutri_app_api.services.clinicalInformationService.MasterDataProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ClinicalInformationRepository extends JpaRepository<ClinicalInformation, UUID> {
@@ -21,4 +23,19 @@ public interface ClinicalInformationRepository extends JpaRepository<ClinicalInf
             @Param("patientId") UUID patientId,
             @Param("nutritionistUserId") UUID nutritionistUserId
     );
+
+    @Query(
+            value = "SELECT id, name, NULL as type, 'SYMPTOM' as source FROM symptoms WHERE is_approved = TRUE " +
+                    "UNION ALL " +
+                    "SELECT id, name, NULL as type, 'DISEASE' as source FROM diseases WHERE is_approved = TRUE " +
+                    "UNION ALL " +
+                    "SELECT id, name, type, 'ALLERGEN' as source FROM allergens WHERE is_approved = TRUE " +
+                    "UNION ALL " +
+                    "SELECT id, name, type, 'MEDICATION_SUPPLEMENT' as source FROM medications_supplements WHERE is_approved = TRUE " +
+                    "UNION ALL " +
+                    "SELECT id, name, NULL as type, 'FOOD' as source FROM foods WHERE is_approved = TRUE " +
+                    "ORDER BY source, name",
+            nativeQuery = true
+    )
+    List<MasterDataProjection> findClinicalInformationMasterData();
 }

@@ -1,4 +1,4 @@
-package org.nutri.app.nutri_app_api.payloads.clinicalInformation;
+package org.nutri.app.nutri_app_api.payloads.clinicalInformation.masterData;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,9 +10,8 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AllergenDTO {
-    private UUID allergenId;
+public class MasterAllergenDTO {
+    private UUID symptomId;
     private String name;
-    private String reactionDetails;
     private AllergenType type;
 }
