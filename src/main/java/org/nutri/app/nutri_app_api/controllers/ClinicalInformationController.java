@@ -1,6 +1,7 @@
 package org.nutri.app.nutri_app_api.controllers;
 
 import org.nutri.app.nutri_app_api.payloads.clinicalInformation.ClinicalInformationDTO;
+import org.nutri.app.nutri_app_api.payloads.clinicalInformation.ClinicalInformationMasterDataDTO;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.clinicalInformationService.ClinicalInformationService;
 import org.springframework.http.HttpStatus;
@@ -31,5 +32,13 @@ public class ClinicalInformationController {
         ClinicalInformationDTO clinicalInformation = clinicalInformationService.getClinicalInformation(userDetails.getId(), patientId);
 
         return ResponseEntity.status(HttpStatus.OK).body(clinicalInformation);
+    }
+
+    @GetMapping("/clinical-information/master-data")
+    @PreAuthorize("hasRole('ROLE_NUTRITIONIST')")
+    public ResponseEntity<ClinicalInformationMasterDataDTO> getClinicalInformationMasterData() {
+        ClinicalInformationMasterDataDTO data = clinicalInformationService.getClinicalInformationMasterData();
+
+        return ResponseEntity.status(HttpStatus.OK).body(data);
     }
 }
