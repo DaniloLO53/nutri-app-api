@@ -34,14 +34,7 @@ public class ScheduleController {
             @PathVariable UUID nutritionist_id,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        ScheduleParameters params = new ScheduleParameters
-                .Builder()
-                .withStartDate(startDate)
-                .withEndDate(endDate)
-                .build();
-
-        UUID userId = userDetails.getId();
-        Set<OwnScheduleDTO> schedules = scheduleService.getSchedulesFromNutritionist(userId, nutritionist_id, params);
+        Set<OwnScheduleDTO> schedules = scheduleService.getSchedulesFromNutritionist(userDetails, nutritionist_id, startDate, endDate);
 
         return ResponseEntity.status(HttpStatus.OK).body(schedules);
     }
@@ -52,16 +45,9 @@ public class ScheduleController {
             Authentication authentication,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        ScheduleParameters params = new ScheduleParameters
-                .Builder()
-                .withStartDate(startDate)
-                .withEndDate(endDate)
-                .build();
-
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        UUID userId = userDetails.getId();
 
-        Set<OwnScheduleDTO> schedules = scheduleService.getOwnSchedules(userId, params);
+        Set<OwnScheduleDTO> schedules = scheduleService.getOwnSchedules(userDetails, startDate, endDate);
 
         return ResponseEntity.status(HttpStatus.OK).body(schedules);
     }

@@ -36,7 +36,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
-public class Nutritionist {
+public class Nutritionist implements EntityByRole {
     public Nutritionist(String crf) {
         this.crf = crf;
     }

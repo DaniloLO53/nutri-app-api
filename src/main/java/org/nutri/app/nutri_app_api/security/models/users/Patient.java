@@ -24,7 +24,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
-public class Patient {
+public class Patient implements EntityByRole {
     public Patient(String cpf) {
         this.cpf = cpf;
     }

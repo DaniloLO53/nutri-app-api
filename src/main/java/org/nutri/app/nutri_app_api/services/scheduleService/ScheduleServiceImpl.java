@@ -20,9 +20,11 @@ import org.nutri.app.nutri_app_api.repositories.scheduleRepository.OwnSchedulePr
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 import org.nutri.app.nutri_app_api.security.models.users.Patient;
+import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
@@ -67,13 +69,11 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Set<OwnScheduleDTO> getOwnSchedules(UUID userId, ScheduleParameters params) {
-        LocalDateTime startTime = params.getStartDate().atStartOfDay();
-        LocalDateTime endTime = params.getEndDate().plusDays(1).atStartOfDay();
+    public Set<OwnScheduleDTO> getOwnSchedules(UserDetailsImpl userDetails, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startTime = startDate.atStartOfDay();
+        LocalDateTime endTime = endDate.plusDays(1).atStartOfDay();
 
-        Nutritionist nutritionist = nutritionistRepository
-                .findFirstByUser_Id(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário", "id", userId.toString()));
+        Nutritionist nutritionist = (Nutritionist) userDetails.getEntityByRole();
 
         Set<OwnScheduleProjection> schedulesByStartAndEndDate = scheduleRepository
                 .findOwnSchedulesByStartAndEndDate(nutritionist.getId(), startTime, endTime);
@@ -82,13 +82,11 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Set<OwnScheduleDTO> getSchedulesFromNutritionist(UUID userId, UUID nutritionistId, ScheduleParameters params) {
-        LocalDateTime startTime = params.getStartDate().atStartOfDay();
-        LocalDateTime endTime = params.getEndDate().plusDays(1).atStartOfDay();
+    public Set<OwnScheduleDTO> getSchedulesFromNutritionist(UserDetailsImpl userDetails, UUID nutritionistId, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startTime = startDate.atStartOfDay();
+        LocalDateTime endTime = endDate.plusDays(1).atStartOfDay();
 
-        Patient patient = patientRepository
-                .findFirstByUser_Id(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Paciente", "id de usuário", userId.toString()));
+        Patient patient = (Patient) userDetails.getEntityByRole();
 
         Nutritionist nutritionist = nutritionistRepository
                 .findFirstById(nutritionistId)
