@@ -83,6 +83,196 @@ Para configurar o ambiente de desenvolvimento local, siga os passos abaixo:
 
 ---
 
+### 🎨 Documentação
+
+Esta documentação descreve os endpoints para gerenciar os horários de disponibilidade (`Schedules`) e as consultas (`Appointments`) associadas.
+
+**Autenticação:** Todas as rotas exigem um Bearer Token JWT válido no cabeçalho `Authorization`.
+
+<br>
+
+<details>
+  <summary><strong>Buscar Agenda de um Nutricionista (Visão do Paciente)</strong> - <code>GET /nutritionists/{nutritionistId}/schedules</code></summary>
+  
+  <br>
+  
+  Busca os horários disponíveis e já agendados de um nutricionista específico dentro de um intervalo de datas.
+
+  - **Autorização:** `ROLE_PATIENT`
+
+  ---
+
+  #### Parâmetros da URL
+
+  | Parâmetro | Tipo | Descrição |
+  | :--- | :--- | :--- |
+  | `nutritionistId` | `UUID` | O ID do nutricionista cuja agenda será buscada. |
+
+  ---
+
+  #### Query Parameters
+
+  | Parâmetro | Tipo | Descrição | Obrigatório |
+  | :--- | :--- | :--- | :--- |
+  | `startDate` | `LocalDate` | Data de início do filtro (formato: `YYYY-MM-DD`). | Não |
+  | `endDate` | `LocalDate` | Data de fim do filtro (formato: `YYYY-MM-DD`). | Não |
+
+  ---
+
+  #### Resposta de Sucesso (Success Response)
+
+  - **Código:** `200 OK`
+  - **Corpo da Resposta:** `Set<OwnScheduleDTO>`
+
+  ```json
+  [
+      {
+          "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+          "startTime": "2025-08-01T10:00:00",
+          "durationMinutes": 30,
+          "type": "SCHEDULE",
+          "patient": null,
+          "status": "DISPONIVEL",
+          "location": {
+              "id": "l1o2c3a4-t5i6-o7n8-9012-3456789abcde",
+              "address": "Rua das Flores, 123 - Sala 4 - São Paulo, SP",
+              "phone1": "11987654321"
+          }
+      },
+      {
+          "id": "f0e9d8c7-b6a5-4321-fedc-ba9876543210",
+          "startTime": "2025-08-01T11:00:00",
+          "durationMinutes": 30,
+          "type": "APPOINTMENT",
+          "patient": {
+              "id": "p1a2t3i4-e5n6-t7e8-9012-3456789abcde",
+              "name": "Carlos Silva",
+              "email": "carlos@email.com"
+          },
+          "status": "CONFIRMADO",
+          "location": {
+              "id": "l1o2c3a4-t5i6-o7n8-9012-3456789abcde",
+              "address": "Rua das Flores, 123 - Sala 4 - São Paulo, SP",
+              "phone1": "11987654321"
+          }
+      }
+  ]
+  ```
+</details>
+
+<details>
+  <summary><strong>Buscar Própria Agenda (Visão do Nutricionista)</strong> - <code>GET /nutritionists/me/schedules</code></summary>
+  
+  <br>
+  
+  Busca os próprios horários de disponibilidade e consultas do nutricionista autenticado.
+
+  - **Autorização:** `ROLE_NUTRITIONIST`
+
+  ---
+
+  #### Query Parameters
+
+  | Parâmetro | Tipo | Descrição | Obrigatório |
+  | :--- | :--- | :--- | :--- |
+  | `startDate` | `LocalDate` | Data de início do filtro (formato: `YYYY-MM-DD`). | Não |
+  | `endDate` | `LocalDate` | Data de fim do filtro (formato: `YYYY-MM-DD`). | Não |
+
+  ---
+
+  #### Resposta de Sucesso (Success Response)
+
+  - **Código:** `200 OK`
+  - **Corpo da Resposta:** `Set<OwnScheduleDTO>` (mesma estrutura do endpoint 1).
+
+</details>
+
+<details>
+  <summary><strong>Criar Horário de Disponibilidade</strong> - <code>POST /nutritionists/me/schedules/{locationId}</code></summary>
+  
+  <br>
+  
+  Cria um novo horário de disponibilidade (`Schedule`) para o nutricionista autenticado em um local de atendimento específico.
+
+  - **Autorização:** `ROLE_NUTRITIONIST`
+
+  ---
+
+  #### Parâmetros da URL
+
+  | Parâmetro | Tipo | Descrição |
+  | :--- | :--- | :--- |
+  | `locationId` | `UUID` | O ID do local de atendimento onde a disponibilidade será criada. |
+
+  ---
+
+  #### Corpo da Requisição (Request Body)
+
+  - **Content-Type:** `application/json`
+
+  ```json
+  {
+      "startLocalDateTime": {
+          "year": 2025,
+          "month": 8,
+          "day": 4,
+          "hour": 14,
+          "minute": 30
+      },
+      "durationMinutes": 30
+  }
+  ```
+
+  ---
+
+  #### Resposta de Sucesso (Success Response)
+
+  - **Código:** `201 CREATED`
+  - **Corpo da Resposta:** `OwnScheduleDTO`
+
+  ```json
+  {
+      "id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+      "startTime": "2025-08-04T14:30:00",
+      "durationMinutes": 30,
+      "type": "SCHEDULE",
+      "patient": null,
+      "status": "DISPONIVEL",
+      "location": {
+          "id": "l1o2c3a4-t5i6-o7n8-9012-3456789abcde",
+          "address": "Av. Principal, 789 - Centro - Rio de Janeiro, RJ",
+          "phone1": "21912345678"
+      }
+  }
+  ```
+</details>
+
+<details>
+  <summary><strong>Deletar Horário de Disponibilidade</strong> - <code>DELETE /nutritionists/me/schedules/{scheduleId}</code></summary>
+  
+  <br>
+  
+  Exclui um horário de disponibilidade (`Schedule`) da agenda do nutricionista. Apenas horários que não possuem uma consulta vinculada podem ser excluídos.
+
+  - **Autorização:** `ROLE_NUTRITIONIST`
+
+  ---
+
+  #### Parâmetros da URL
+
+  | Parâmetro | Tipo | Descrição |
+  | :--- | :--- | :--- |
+  | `scheduleId` | `UUID` | O ID do horário de disponibilidade (`Schedule`) a ser deletado. |
+
+  ---
+
+  #### Resposta de Sucesso (Success Response)
+
+  - **Código:** `204 No Content`
+  - **Corpo da Resposta:** Vazio.
+
+</details>
+
 ### 🤝 Como Contribuir
 
 Contribuições são o que tornam a comunidade open-source um lugar incrível para aprender, inspirar e criar. Qualquer contribuição que você fizer será **muito bem-vinda**.

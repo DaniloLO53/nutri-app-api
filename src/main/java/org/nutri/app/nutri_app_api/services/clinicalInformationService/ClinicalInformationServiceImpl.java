@@ -256,9 +256,9 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
         dto.setCustomData(entity.getCustomData());
 
         // 2. Mapear as listas de relações (coleções)
-            System.out.println("********* ENTITY ID: " + entity.getId());
-            System.out.println("********* SYMP: " + entity.getSymptoms());
-            System.out.println("********* MED: " + entity.getMedications());
+        System.out.println("********* ENTITY ID: " + entity.getId());
+        System.out.println("********* SYMP: " + entity.getSymptoms());
+        System.out.println("********* MED: " + entity.getMedications());
         if (entity.getSymptoms() != null) {
             List<SymptomDTO> symptomDTOs = entity.getSymptoms().stream().map(link ->
                     new SymptomDTO(
@@ -344,6 +344,9 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
                 case ClinicalInformationMasterDataType.DISEASE:
                     diseaseList.add(new MasterDiseaseDTO(proj.getId(), proj.getName()));
                     break;
+                case ClinicalInformationMasterDataType.FOOD:
+                    foodList.add(new MasterFoodDTO(proj.getId(), proj.getName()));
+                    break;
                 case ClinicalInformationMasterDataType.ALLERGEN:
                     AllergenType allergenType = AllergenType.valueOf(proj.getType());
                     allergenList.add(new MasterAllergenDTO(proj.getId(), proj.getName(), allergenType));
@@ -351,9 +354,6 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
                 case ClinicalInformationMasterDataType.MEDICATION_SUPPLEMENT:
                     MedicationType medType = MedicationType.valueOf(proj.getType());
                     medicationList.add(new MasterMedicationDTO(proj.getId(), proj.getName(), medType));
-                    break;
-                case ClinicalInformationMasterDataType.FOOD:
-                    foodList.add(new MasterFoodDTO(proj.getId(), proj.getName()));
                     break;
                 default:
                     // Opcional: Logar um aviso se uma fonte desconhecida aparecer
