@@ -49,7 +49,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                     "        WHEN aps.name = 'CONFIRMADO' THEN 3 " +
                     "        ELSE 4 " +
                     "    END ASC, " +
-                    "    s.start_time ASC",
+                    "    s.start_time DESC",
             countQuery = "SELECT COUNT(a.id) " +
                     "FROM appointments a " +
                     "LEFT JOIN schedules s ON s.id = a.schedule_id " +

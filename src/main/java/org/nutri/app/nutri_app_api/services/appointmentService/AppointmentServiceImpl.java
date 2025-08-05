@@ -184,7 +184,6 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         Patient patient = findPatient(userDetails, patientId);
 
-
         Nutritionist scheduleOwner = schedule.getLocation().getNutritionist();
         validateAppointmentCreation(userDetails, patient, schedule, scheduleOwner);
 
