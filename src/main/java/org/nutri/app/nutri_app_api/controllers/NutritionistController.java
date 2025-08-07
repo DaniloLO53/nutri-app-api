@@ -2,7 +2,7 @@ package org.nutri.app.nutri_app_api.controllers;
 
 import jakarta.validation.Valid;
 import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.NutritionistProfile;
-import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParamsDTO;
+import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParams;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.nutritionistService.NutritionistService;
 import org.springframework.http.HttpStatus;
@@ -25,20 +25,20 @@ public class NutritionistController {
 
     @GetMapping("/nutritionists/search")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
-    public ResponseEntity<Set<ProfileSearchParamsDTO>> getProfiles(
+    public ResponseEntity<Set<ProfileSearchParams>> getProfiles(
             @RequestParam(name = "nutritionistName", required = false) String nutritionistName,
             @RequestParam(name = "ibgeApiCity", required = false) String ibgeApiCity,
             @RequestParam(name = "ibgeApiState", required = false) String ibgeApiState,
             @RequestParam(name = "acceptsRemote", required = false) String acceptsRemote) {
 
-        ProfileSearchParamsDTO params = new ProfileSearchParamsDTO();
+        ProfileSearchParams params = new ProfileSearchParams();
 
         params.setAcceptsRemote(Boolean.parseBoolean(acceptsRemote));
         params.setIbgeApiState(ibgeApiState);
         params.setIbgeApiCity(ibgeApiCity);
         params.setNutritionistName(nutritionistName);
 
-        Set<ProfileSearchParamsDTO> profiles = nutritionistService.getProfilesByParams(params);
+        Set<ProfileSearchParams> profiles = nutritionistService.getProfilesByParams(params);
 
         return ResponseEntity.status(HttpStatus.OK).body(profiles);
     }

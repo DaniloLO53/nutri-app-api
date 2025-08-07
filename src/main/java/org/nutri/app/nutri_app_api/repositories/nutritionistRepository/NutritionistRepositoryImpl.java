@@ -22,7 +22,8 @@ public class NutritionistRepositoryImpl implements NutritionistRepositoryCustom 
                 "SELECT " +
                         "CONCAT(u.first_name, ' ', u.last_name) AS nutritionistName, " +
                         "n.id, " +
-                        "l.address, " +
+                        "l.id AS locationId, " +
+                        "l.address as locationName, " +
                         "n.accepts_remote AS acceptsRemote, " +
                         "l.ibge_api_city AS ibgeApiCity, " +
                         "l.ibge_api_state AS ibgeApiState " +
@@ -39,15 +40,15 @@ public class NutritionistRepositoryImpl implements NutritionistRepositoryCustom 
         Map<String, Object> params = new HashMap<>();
 
         if (nutritionistName != null && !nutritionistName.isBlank()) {
-            // Usando um nome de parâmetro único para evitar conflito com o alias do SELECT
-            sql.append(" AND l.ibge_api_state = :ibgeApiState");
-            params.put("ibgeApiState", ibgeApiState.trim().toUpperCase());
-        }
-
-        if (nutritionistName != null && !nutritionistName.isBlank()) {
-            // Usando um nome de parâmetro único para evitar conflito com o alias do SELECT
+            // Adiciona filtro por nome do nutricionista (case-insensitive e sem acentos)
             sql.append(" AND unaccent(CONCAT(u.first_name, ' ', u.last_name)) ILIKE :nameFilter");
             params.put("nameFilter", "%" + nutritionistName.trim() + "%");
+        }
+
+        if (ibgeApiState != null && !ibgeApiState.isBlank()) {
+            // CORREÇÃO: Adiciona o filtro de estado corretamente
+            sql.append(" AND l.ibge_api_state = :stateFilter");
+            params.put("stateFilter", ibgeApiState.trim().toUpperCase());
         }
 
         if (ibgeApiCity != null && !ibgeApiCity.isBlank()) {

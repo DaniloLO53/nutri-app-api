@@ -82,20 +82,24 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Set<OwnScheduleDTO> getSchedulesFromNutritionist(UserDetailsImpl userDetails, UUID nutritionistId, LocalDate startDate, LocalDate endDate) {
+    public Set<OwnScheduleDTO> getSchedulesFromNutritionist(UserDetailsImpl userDetails, UUID nutritionistId, UUID locationId, LocalDate startDate, LocalDate endDate) {
         LocalDateTime startTime = startDate.atStartOfDay();
         LocalDateTime endTime = endDate.plusDays(1).atStartOfDay();
 
         Patient patient = (Patient) userDetails.getEntityByRole();
 
+        if (!locationRepository.existsById(locationId)) {
+            throw new ResourceNotFoundException("Localidade", "id", locationId.toString());
+        }
+
         Nutritionist nutritionist = nutritionistRepository
                 .findFirstById(nutritionistId)
                 .orElseThrow(() -> new ResourceNotFoundException("Nutricionista", "id", nutritionistId.toString()));
 
-        Set<OwnScheduleProjection> schedulesByStartAndEndDate = scheduleRepository
-                .findOwnSchedulesByStartAndEndDate(nutritionist.getId(), startTime, endTime);
+        Set<OwnScheduleProjection> schedulesByStartAndEndDateAndLocation = scheduleRepository
+                .findOwnSchedulesByStartAndEndDateAndLocation(nutritionist.getId(), locationId, startTime, endTime);
 
-        Set<OwnScheduleDTO> scheduleDTO = schedulesByStartAndEndDate
+        Set<OwnScheduleDTO> scheduleDTO = schedulesByStartAndEndDateAndLocation
                 .stream()
                 .map(this::convertProjectionToDto).collect(Collectors.toSet());
 

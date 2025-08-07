@@ -9,7 +9,7 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProfileSearchParamsDTO {
+public class ProfileSearchParams {
     @ToString.Include
     private String nutritionistName;
 
@@ -18,7 +18,7 @@ public class ProfileSearchParamsDTO {
 
     @NotNull
     @ToString.Include
-    private String address;
+    private ProfileSearchParamsLocation location;
 
     @NotNull
     @ToString.Include

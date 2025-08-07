@@ -5,7 +5,8 @@ import java.util.UUID;
 public record ProfileByParamsProjection(
     String nutritionistName,
     UUID id,
-    String address,
+    UUID locationId,
+    String locationName,
     Boolean acceptsRemote,
     String ibgeApiCity,
     String ibgeApiState

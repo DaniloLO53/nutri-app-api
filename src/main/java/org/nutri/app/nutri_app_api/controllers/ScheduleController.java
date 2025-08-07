@@ -27,14 +27,15 @@ public class ScheduleController {
         this.scheduleService = scheduleService;
     }
 
-    @GetMapping("/nutritionists/{nutritionist_id}/schedules")
+    @GetMapping("/nutritionists/{nutritionistId}/locations/{locationId}/schedules")
     @PreAuthorize("hasRole('ROLE_PATIENT')")
     public ResponseEntity<Set<OwnScheduleDTO>> getSchedulesFromNutritionist(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @PathVariable UUID nutritionist_id,
+            @PathVariable UUID nutritionistId,
+            @PathVariable UUID locationId,
             @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(name = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        Set<OwnScheduleDTO> schedules = scheduleService.getSchedulesFromNutritionist(userDetails, nutritionist_id, startDate, endDate);
+        Set<OwnScheduleDTO> schedules = scheduleService.getSchedulesFromNutritionist(userDetails, nutritionistId, locationId, startDate, endDate);
 
         return ResponseEntity.status(HttpStatus.OK).body(schedules);
     }

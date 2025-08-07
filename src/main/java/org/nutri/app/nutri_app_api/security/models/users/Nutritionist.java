@@ -21,7 +21,8 @@ import java.util.UUID;
         columns = {
             @ColumnResult(name = "nutritionistName", type = String.class),
             @ColumnResult(name = "id", type = UUID.class),
-            @ColumnResult(name = "address", type = String.class),
+            @ColumnResult(name = "locationId", type = UUID.class),
+            @ColumnResult(name = "locationName", type = String.class),
             @ColumnResult(name = "acceptsRemote", type = Boolean.class),
             @ColumnResult(name = "ibgeApiCity", type = String.class),
             @ColumnResult(name = "ibgeApiState", type = String.class)
