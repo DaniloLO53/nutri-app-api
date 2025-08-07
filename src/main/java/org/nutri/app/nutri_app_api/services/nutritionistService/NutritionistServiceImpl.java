@@ -5,7 +5,8 @@ import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
 import org.nutri.app.nutri_app_api.models.locations.Location;
 import org.nutri.app.nutri_app_api.payloads.locationDTOs.LocationDTO;
 import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.NutritionistProfile;
-import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParamsDTO;
+import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParams;
+import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParamsLocation;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistProfileFlatProjection;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileByParamsProjection;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistRepository;
@@ -78,7 +79,7 @@ public class NutritionistServiceImpl implements NutritionistService {
     }
 
     @Override
-    public Set<ProfileSearchParamsDTO> getProfilesByParams(ProfileSearchParamsDTO params) {
+    public Set<ProfileSearchParams> getProfilesByParams(ProfileSearchParams params) {
         String nutritionistName = params.getNutritionistName();
         String ibgeApiCity = params.getIbgeApiCity();
         String ibgeApiState = params.getIbgeApiState();
@@ -87,14 +88,18 @@ public class NutritionistServiceImpl implements NutritionistService {
         Set<ProfileByParamsProjection> schedules = nutritionistRepository
                 .findNutritionistProfilesByParams(nutritionistName, ibgeApiCity, ibgeApiState, acceptsRemote);
 
-        Set<ProfileSearchParamsDTO> dtos = new HashSet<>();
+        Set<ProfileSearchParams> dtos = new HashSet<>();
 
         schedules.forEach(schedule -> {
-            ProfileSearchParamsDTO scheduleSearchParamsDTO = new ProfileSearchParamsDTO();
+            ProfileSearchParams scheduleSearchParamsDTO = new ProfileSearchParams();
+            ProfileSearchParamsLocation location = new ProfileSearchParamsLocation();
+
+            location.setId(schedule.locationId());
+            location.setAddress(schedule.locationName());
+            scheduleSearchParamsDTO.setLocation(location);
 
             scheduleSearchParamsDTO.setNutritionistName(schedule.nutritionistName());
             scheduleSearchParamsDTO.setId(schedule.id().toString());
-            scheduleSearchParamsDTO.setAddress(schedule.address());
             scheduleSearchParamsDTO.setIbgeApiCity(schedule.ibgeApiCity());
             scheduleSearchParamsDTO.setIbgeApiState(schedule.ibgeApiState());
             scheduleSearchParamsDTO.setAcceptsRemote(schedule.acceptsRemote());
