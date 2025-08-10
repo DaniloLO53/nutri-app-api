@@ -49,8 +49,7 @@ public class AppointmentController {
     @PreAuthorize("hasRole('ROLE_PATIENT')")
     public ResponseEntity<Page<PatientAppointmentResponse>> getPatientAppointments(
             Authentication authentication,
-            @PageableDefault(size = 15, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable
-    ) {
+            @PageableDefault(size = 15, sort = "startTime", direction = Sort.Direction.ASC) Pageable pageable) {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         UUID userId = userDetails.getId();
 
