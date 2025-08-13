@@ -2,7 +2,6 @@ package org.nutri.app.nutri_app_api.services.scheduleService;
 
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.ScheduleCreateDTO;
-import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.ScheduleParameters;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 
 import java.time.LocalDate;
