@@ -69,7 +69,6 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", patientId.toString()));
 
-        // 2. Crie a instância principal e mapeie os campos simples (flat properties)
         ClinicalInformation clinicalInformation = new ClinicalInformation();
         clinicalInformation.setPatient(patient);
         clinicalInformation.setAssessmentDate(dto.getAssessmentDate());
@@ -216,7 +215,6 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
 
         ClinicalInformationDTO dto = new ClinicalInformationDTO();
 
-        // 1. Mapear os campos simples (propriedades "planas")
         dto.setId(entity.getId());
         dto.setPatientId(entity.getPatient().getId());
         dto.setAssessmentDate(entity.getAssessmentDate());
@@ -255,10 +253,6 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
         dto.setRecentLabResults(entity.getRecentLabResults());
         dto.setCustomData(entity.getCustomData());
 
-        // 2. Mapear as listas de relações (coleções)
-        System.out.println("********* ENTITY ID: " + entity.getId());
-        System.out.println("********* SYMP: " + entity.getSymptoms());
-        System.out.println("********* MED: " + entity.getMedications());
         if (entity.getSymptoms() != null) {
             List<SymptomDTO> symptomDTOs = entity.getSymptoms().stream().map(link ->
                     new SymptomDTO(
@@ -327,14 +321,12 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
     }
 
     private ClinicalInformationMasterDataDTO buildMasterDataFromProjection(List<MasterDataProjection> projections) {
-        // Inicializa as listas que irão compor o resultado final
         List<MasterSymptomDTO> symptomList = new ArrayList<>();
         List<MasterAllergenDTO> allergenList = new ArrayList<>();
         List<MasterDiseaseDTO> diseaseList = new ArrayList<>();
         List<MasterMedicationDTO> medicationList = new ArrayList<>();
         List<MasterFoodDTO> foodList = new ArrayList<>();
 
-        // Itera sobre cada item da projeção e o coloca na lista correta
         for (MasterDataProjection proj : projections) {
 
             switch (ClinicalInformationMasterDataType.valueOf(proj.getSource())) {
@@ -356,12 +348,10 @@ public class ClinicalInformationServiceImpl implements ClinicalInformationServic
                     medicationList.add(new MasterMedicationDTO(proj.getId(), proj.getName(), medType));
                     break;
                 default:
-                    // Opcional: Logar um aviso se uma fonte desconhecida aparecer
                     break;
             }
         }
 
-        // Constrói o DTO final com todas as listas populadas
         return new ClinicalInformationMasterDataDTO(
                 symptomList,
                 allergenList,

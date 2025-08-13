@@ -1,9 +1,8 @@
 package org.nutri.app.nutri_app_api.controllers;
 
 import jakarta.validation.Valid;
-import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.ScheduleCreateDTO;
-import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.ScheduleParameters;
 import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.ScheduleCreateDTO;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.nutri.app.nutri_app_api.services.scheduleService.ScheduleService;
 import org.springframework.format.annotation.DateTimeFormat;

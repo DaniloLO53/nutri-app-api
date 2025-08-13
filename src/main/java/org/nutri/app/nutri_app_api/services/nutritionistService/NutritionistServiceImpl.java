@@ -8,8 +8,8 @@ import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.NutritionistProfile
 import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParams;
 import org.nutri.app.nutri_app_api.payloads.nutritionistDTOs.ProfileSearchParamsLocation;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistProfileFlatProjection;
-import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileByParamsProjection;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistRepository;
+import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.ProfileByParamsProjection;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 import org.springframework.stereotype.Service;
 
@@ -124,7 +124,6 @@ public class NutritionistServiceImpl implements NutritionistService {
     // TODO: refatorar esse código horroroso
     private Set<LocationDTO> getLocationDTOsFromFlatProjections(Set<NutritionistProfileFlatProjection> flatResults) {
     return flatResults.stream()
-        // 1. FILTRA: Mantém apenas as projeções que têm pelo menos um dado de localização
         .filter(p ->
             p.getAddress() != null ||
             p.getPhone1() != null ||
@@ -134,7 +133,6 @@ public class NutritionistServiceImpl implements NutritionistService {
             p.getIbgeApiCity() != null ||
             p.getIbgeApiState() != null
         )
-        // 2. MAPEIA: Transforma as projeções filtradas em LocationDTOs
         .map(p -> {
             LocationDTO dto = new LocationDTO();
             dto.setAddress(p.getAddress());
@@ -146,7 +144,6 @@ public class NutritionistServiceImpl implements NutritionistService {
             dto.setIbgeApiState(p.getIbgeApiState());
             return dto;
         })
-        // 3. COLETA: Agrupa os DTOs resultantes em um Set
         .collect(Collectors.toSet());
 }
 
