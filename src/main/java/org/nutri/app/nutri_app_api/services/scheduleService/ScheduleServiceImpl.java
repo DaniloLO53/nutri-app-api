@@ -1,28 +1,24 @@
 package org.nutri.app.nutri_app_api.services.scheduleService;
 
 import org.nutri.app.nutri_app_api.exceptions.ConflictException;
-import org.nutri.app.nutri_app_api.exceptions.ForbiddenException;
 import org.nutri.app.nutri_app_api.exceptions.ResourceNotFoundException;
-import org.nutri.app.nutri_app_api.models.appointments.Appointment;
-import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatus;
 import org.nutri.app.nutri_app_api.models.appointments.AppointmentStatusName;
 import org.nutri.app.nutri_app_api.models.locations.Location;
 import org.nutri.app.nutri_app_api.models.schedules.Schedule;
 import org.nutri.app.nutri_app_api.payloads.locationDTOs.OwnLocationResponse;
 import org.nutri.app.nutri_app_api.payloads.patientDTOs.PatientSearchByNameDTO;
-import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.*;
-import org.nutri.app.nutri_app_api.repositories.AppointmentStatusRepository;
-import org.nutri.app.nutri_app_api.repositories.appointmentRepository.AppointmentRepository;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.AppointmentOrSchedule;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.CustomLocalDateTime;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.OwnScheduleDTO;
+import org.nutri.app.nutri_app_api.payloads.scheduleDTOs.ScheduleCreateDTO;
 import org.nutri.app.nutri_app_api.repositories.locationRepository.LocationRepository;
 import org.nutri.app.nutri_app_api.repositories.nutritionistRepository.NutritionistRepository;
-import org.nutri.app.nutri_app_api.repositories.patientRepository.PatientRepository;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.OwnScheduleProjection;
 import org.nutri.app.nutri_app_api.repositories.scheduleRepository.ScheduleRepository;
 import org.nutri.app.nutri_app_api.security.models.users.Nutritionist;
 import org.nutri.app.nutri_app_api.security.models.users.Patient;
 import org.nutri.app.nutri_app_api.security.services.UserDetailsImpl;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,23 +30,14 @@ import java.util.stream.Collectors;
 public class ScheduleServiceImpl implements ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final NutritionistRepository nutritionistRepository;
-    private final PatientRepository patientRepository;
     private final LocationRepository locationRepository;
-    private final AppointmentRepository appointmentRepository;
-    private final AppointmentStatusRepository appointmentStatusRepository;
 
     public ScheduleServiceImpl(ScheduleRepository scheduleRepository,
                                NutritionistRepository nutritionistRepository,
-                               PatientRepository patientRepository,
-                               LocationRepository locationRepository,
-                               AppointmentRepository appointmentRepository,
-                               AppointmentStatusRepository appointmentStatusRepository) {
+                               LocationRepository locationRepository) {
         this.scheduleRepository = scheduleRepository;
         this.nutritionistRepository = nutritionistRepository;
-        this.patientRepository = patientRepository;
         this.locationRepository = locationRepository;
-        this.appointmentRepository = appointmentRepository;
-        this.appointmentStatusRepository = appointmentStatusRepository;
     }
 
     @Override
@@ -146,7 +133,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = new Schedule();
         schedule.setDurationMinutes(scheduleDTO.getDurationMinutes());
         schedule.setStartTime(scheduleStart);
-        schedule.setLocation(location); // Apenas associe a localização
+        schedule.setLocation(location);
 
         Schedule savedSchedule = scheduleRepository.save(schedule);
 
@@ -170,18 +157,13 @@ public class ScheduleServiceImpl implements ScheduleService {
             return null;
         }
 
-        // 1. Lógica para decidir qual ID usar
         UUID id = projection.getAppointmentId() != null ? projection.getAppointmentId() : projection.getScheduleId();
 
-        // 2. Mapeamento direto
         LocalDateTime startTime = projection.getStartTime();
         Integer durationMinutes = projection.getDurationMinutes();
 
-        // 3. Conversão de String para Enum
         AppointmentOrSchedule type = AppointmentOrSchedule.valueOf(projection.getType());
 
-        // 4. Tratamento de campos que podem ser nulos na projeção
-        // Para satisfazer o @NotNull do DTO, fornecemos valores padrão.
         String patientName = projection.getPatientName() != null ? projection.getPatientName() : "Vaga Disponível";
 
         AppointmentStatusName status = projection.getStatus() != null
@@ -197,7 +179,6 @@ public class ScheduleServiceImpl implements ScheduleService {
         location.setId(projection.getLocationId().toString());
         location.setAddress(projection.getAddress());
 
-        // 5. Criação do DTO
         return new OwnScheduleDTO(id, startTime, durationMinutes, type, patientDTO, status, location);
     }
 }
