@@ -28,7 +28,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /**
-     * Registra nosso interceptor customizado para ser executado em todas as mensagens
+     * Registra interceptor customizado para ser executado em todas as mensagens
      * que chegam do cliente.
      */
     @Override
