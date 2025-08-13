@@ -38,18 +38,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void markAsRead(UUID userId, UUID notificationId) {
-        // 1. Busca a notificação no banco de dados pelo seu ID.
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", "id", notificationId.toString()));
 
-        // 2. Verificação de Segurança (CRÍTICO): Confirma se o ID do usuário logado
-        //    é o mesmo do ID do destinatário da notificação.
         if (!notification.getRecipient().getId().equals(userId)) {
             throw new ForbiddenException("Acesso negado. Você não tem permissão para modificar esta notificação.");
         }
 
-        // 3. Altera o status para 'lida' e salva no banco.
-        //    (Opcional: verificar se já está lida para evitar uma escrita desnecessária no banco)
         if (!notification.isRead()) {
             notification.setRead(true);
             notificationRepository.save(notification);
@@ -64,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<Notification> notifications = notificationRepository.findByRecipientOrderByCreatedAtDesc(recipient);
 
         return notifications.stream()
-                .map(notification -> buildNotificationDTO(notification)) // Mapeia cada notificação usando o método helper
+                .map(this::buildNotificationDTO)
                 .collect(Collectors.toList());
     }
 
@@ -77,21 +72,16 @@ public class NotificationServiceImpl implements NotificationService {
         Patient patient = appointment.getPatient();
         Nutritionist nutritionist = appointment.getSchedule().getLocation().getNutritionist();
 
-        // 1. Persistir a notificação no banco de dados
         Notification notificationEntity = new Notification();
         notificationEntity.setRecipient(patient.getUser());
         notificationEntity.setSender(nutritionist.getUser()); // <--- SALVANDO O REMETENTE
         notificationEntity.setMessage("O nutricionista " + nutritionist.getUser().getFirstName() + " agendou uma nova consulta para você.");
         notificationEntity.setRelatedEntityId(appointment.getId());
-        // 'isRead' e 'createdAt' terão valores padrão
 
         Notification savedNotification = notificationRepository.save(notificationEntity);
 
-        // 2. Enviar a notificação em tempo real via WebSocket
-        // É uma boa prática enviar o objeto salvo, pois ele agora tem um ID e data de criação.
         NotificationDTO notificationPayload = buildNotificationDTO(savedNotification, patient, nutritionist); // Crie um método para montar o DTO
 
-        // O destino deve ser o ID do *paciente*
         messagingTemplate.convertAndSend("/topic/notifications/" + patient.getId(), notificationPayload);
     }
 
@@ -131,7 +121,6 @@ public class NotificationServiceImpl implements NotificationService {
             );
         }
 
-        // Constrói o DTO do destinatário
         User recipient = notification.getRecipient();
         NotificationPatientDTO toDTO = new NotificationPatientDTO(
                 recipient.getId(),

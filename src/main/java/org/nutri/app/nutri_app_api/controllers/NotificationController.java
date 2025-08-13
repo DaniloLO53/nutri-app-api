@@ -22,7 +22,6 @@ public class NotificationController {
 
     @GetMapping("/notifications")
     public ResponseEntity<List<NotificationDTO>> getMyNotifications(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        // Crie um método no seu serviço para buscar as notificações pelo UserDetails
         List<NotificationDTO> notifications = notificationService.getNotificationsForUser(userDetails.getId());
         return ResponseEntity.ok(notifications);
     }
@@ -32,8 +31,6 @@ public class NotificationController {
             @PathVariable UUID notificationId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        // Crie um método no serviço para marcar como lida,
-        // garantindo que o `userDetails.getId()` é o dono da notificação
         notificationService.markAsRead(userDetails.getId(), notificationId);
         return ResponseEntity.noContent().build();
     }
