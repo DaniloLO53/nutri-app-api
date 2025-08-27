@@ -102,6 +102,8 @@ Esta documentação descreve os endpoints para gerenciar os horários de disponi
 
   ---
 
+  //
+
   #### Parâmetros da URL
 
   | Parâmetro | Tipo | Descrição |
